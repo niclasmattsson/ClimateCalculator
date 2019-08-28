@@ -14,7 +14,7 @@ let
 		statemat = reshapestates(states)
 		forccoeff = splinecoeff(lambdas, forcingfactor)
 		fertcoeff = splinecoeff(lambdas, fertilization)
-		statecoeff = Array{Float64,3}(75,length(forccoeff),ylen)
+		statecoeff = Array{Float64,3}(undef, 75,length(forccoeff),ylen)
 		for ivar = 1:75, iyear=1:ylen
 			statecoeff[ivar,:,iyear] = splinecoeff(lambdas, statemat[ivar,:,iyear])
 		end
@@ -24,9 +24,9 @@ let
 
 	function precalchistory(lambdas, years)
 		len = length(lambdas)
-		states = Vector{Vector{ClimateState}}(len)
-		forcingfactor = Vector{Float64}(len)
-		fertilization = Vector{Float64}(len)
+		states = Vector{Vector{ClimateState}}(undef, len)
+		forcingfactor = Vector{Float64}(undef, len)
+		fertilization = Vector{Float64}(undef, len)
 		progressmeter = Progress(len, 1)
 		for i=1:len
 			results, p = solveclimate(; lambda=lambdas[i], timestep=0.001, lastyear=2010, usecache=false)
@@ -41,7 +41,7 @@ let
 	function reshapestates(states::Vector{Vector{ClimateState}})::Array{Float64,3}
 		llen = length(states)
 		ylen = length(states[1])
-		out = Array{Float64,3}(75,llen,ylen)
+		out = Array{Float64,3}(undef, 75,llen,ylen)
 		for ilambda=1:llen, iyear=1:ylen
 			out[:,ilambda,iyear] = state2vector(states[ilambda][iyear])
 		end
