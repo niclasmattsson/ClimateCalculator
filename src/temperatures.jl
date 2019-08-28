@@ -87,7 +87,7 @@ let
 		dt_Temp[midlayers] = secondsperyear * (k * dz2_Temp + w * dz_Temp)
 
 		# Temp [°C]: temperature change since preindustrial times in each ocean layer
-		Temp[:] += timestep * dt_Temp
+		Temp[1:maxlayers-1] += timestep * dt_Temp[1:maxlayers-1]
 
 		# Second boundary condition (type Robin): approximate the derivative to get an equation for Temp[max]
 		dz_Temp_max = w / k * (polarwaterratio*Temp_mixed - Temp[maxlayers])
