@@ -28,10 +28,10 @@ function runclimatemodel(req)
     cccdata = JSON.parse(transcode(String, req[:data]))
     firstyear = cccdata["firstyear"]
     lastyear = cccdata["lastyear"]
-    #=if cccdata["firstyear"] != 2010 || cccdata["lastyear"] != 2100
-        throw("Received emission data for $(cccdata["firstyear"])-$(cccdata["lastyear"]), " *
-            "but currently only 2010-2100 is supported.")
-    end=#
+    # if cccdata["firstyear"] != 2010 || cccdata["lastyear"] != 2100
+    #     throw("Received emission data for $(cccdata["firstyear"])-$(cccdata["lastyear"]), " *
+    #         "but currently only 2010-2100 is supported.")
+    # end
     rcp = "RCP3PD"
     annualEmissions = getscenario(rcp)
     annualEmissions[:CO2][iyear(firstyear):iyear(lastyear)] = 12/44*(cccdata["emissions"]["FossilCO2"] + cccdata["emissions"]["OtherCO2"])
@@ -55,8 +55,7 @@ function printPOSTinfo(req)
 end
 
 function startserver()
-    #println(dirname(@__FILE__))
-    staticroute = route("static", files(dirname(@__FILE__)), Mux.notfound())
+    staticroute = route("static", files(@__DIR__), Mux.notfound())
     #POSTroute = page("/user/:user", req -> "<h1>Hello, $(req[:params][:user])!</h1>")
     #POSTroute = method("POST", respond("POST request received."))
     #POSTroute = branch(req -> req[:method] == "POST", req -> printPOSTinfo(req))
@@ -64,7 +63,7 @@ function startserver()
 
     serverstarted = false #isdefined(:webserver)
     defaults = stack(Mux.todict, Mux.splitquery, Mux.toresponse)
-    #@app webserver = (defaults, Mux.basiccatch, POSTroute, staticroute, Mux.notfound())
+    # @app webserver = (defaults, Mux.basiccatch, POSTroute, staticroute, Mux.notfound())
     @app webserver = (defaults, POSTroute, staticroute, Mux.notfound())
     !serverstarted && serve(webserver)    # only run this once, modify the line with @app test = ... instead
     println("Open http://localhost:8000/static/UI_layout.html in your web browser.")

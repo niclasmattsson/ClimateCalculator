@@ -22,7 +22,7 @@ end
 function getparams(annualemissions;  firstyear::Int=2010, lastyear::Int=2100, usecache::Bool=true,
 						timestep::Float64=0.01, lambda::Float64=0.8, rcp::String="RCP45",
 						oceantempfeedback::Float64=1.0, bioQ10factor::Float64=2.0, equilibriumCO2::Float64=278.0)
-	
+
 	p = ClimateParams(timestep, lambda, 0.0, 0.0, oceantempfeedback, bioQ10factor, equilibriumCO2)
 	if usecache && oceantempfeedback == 1.0 && bioQ10factor == 2.0 && equilibriumCO2 == 278.0
 		p.aerosolforcingfactor = interpolatespline(lambda, cached_coeff_forcing)
@@ -38,7 +38,6 @@ end
 function runscen(scen::String;  kwargs...)
 	results, p, annualemissions, rcp = solveclimate(scen;  kwargs...)
 	printresults(2010:10:2100, results, p, annualemissions, rcp)
-	results, p, annualemissions, rcp
 end
 
 solveclimate(; kwargs...) = solveclimate("2DEG";  kwargs...)
@@ -80,7 +79,7 @@ function solveclimate(annualemissions, p::ClimateParams,
 		emissions = Dict(	:CO2 => interpolate(t, annualemissions[:CO2]),
 							:CH4 => interpolate(t, annualemissions[:CH4]),
 							:N2O => interpolate(t, annualemissions[:N2O]))
-		
+
 		temperatures!(s, p)		# accuracy is better if temperatures are calculated first
 		carbonbalance!(emissions, s, p)
 		oceancarbon!(s, p)
@@ -109,7 +108,7 @@ function printresults(yearrange, res, p::ClimateParams, annualemissions, rcp::St
 		RF_nonCO2 = otherforcing[rcp][i] + p.aerosolforcingfactor * aerosolforcing[rcp][i] +
 			sum(res[i].RadiativeForcing[g] for g in GAS if g != :CO2)
 		out_carbon[row,:] =
-			[res[i].Concentration[:CO2]/ppm_per_GtC  sum(res[i].BioReservoir)  res[i].DeltaDIC/micromol_per_kg_per_GtC] 
+			[res[i].Concentration[:CO2]/ppm_per_GtC  sum(res[i].BioReservoir)  res[i].DeltaDIC/micromol_per_kg_per_GtC]
 		out_emissions[row,:] =
 			[annualemissions[:CO2][i]  annualemissions[:CH4][i]  annualemissions[:N2O][i]]
 		out_concentration[row,:] =

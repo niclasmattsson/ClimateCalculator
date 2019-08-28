@@ -8,7 +8,7 @@ function readfixedwidth(x::String; opts...)
 end 
 
 function readssp(unit)
-	path = joinpath(dirname(@__FILE__), "..")
+	path = joinpath(@__DIR__, "..")
 	file = "$path/SSP/SSP database.xlsx"
 	models = ["AIM/CGE", "GCAM4", "IMAGE", "MESSAGE-GLOBIOM", "REMIND-MAGPIE", "WITCH-GLOBIOM"]
 	gases = Dict(
