@@ -1,4 +1,4 @@
-using ProgressMeter, JLD2, Dierckx
+using ProgressMeter, Dierckx, JLD
 
 let
 	splineknots = [fill(0.2, 4); 0.4:0.1:1.8; fill(2.0, 4)]
@@ -18,7 +18,8 @@ let
 		for ivar = 1:75, iyear=1:ylen
 			statecoeff[ivar,:,iyear] = splinecoeff(lambdas, statemat[ivar,:,iyear])
 		end
-		@save "cachedclimatehistory.jld2" statecoeff forccoeff fertcoeff
+		path = joinpath(@__DIR__, "..")
+		JLD.save("$path/cachedclimatehistory.jld", "statecoeff", statecoeff, "forccoeff", forccoeff, "fertcoeff", fertcoeff)
 	end
 
 	function precalchistory(lambdas, years)
@@ -47,14 +48,16 @@ let
 		out
 	end
 
-	if !isfile("cachedclimatehistory.jld2")
-		println("Precalculating historical model results...")
-		println("(This will take a minute or two but will make the model run much faster.)")
-		makecalibrationcache()
-	end
+	# if !isfile("$path/cachedclimatehistory.jld2")
+	# 	println("Precalculating historical model results...")
+	# 	println("(This will take a minute or two but will make the model run much faster.)")
+	# 	makecalibrationcache()
+	# end
 
-	@load "cachedclimatehistory.jld2"
-	global const cached_coeff_state = statecoeff
-	global const cached_coeff_forcing = forccoeff
-	global const cached_coeff_fertilization = fertcoeff
+	path = joinpath(@__DIR__, "..")
+	cache = JLD.load("$path/cachedclimatehistory.jld")
+	global const cached_coeff_state = cache["statecoeff"]
+	global const cached_coeff_forcing = cache["forccoeff"]
+	global const cached_coeff_fertilization = cache["fertcoeff"]
+
 end
