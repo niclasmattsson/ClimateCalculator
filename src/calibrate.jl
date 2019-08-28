@@ -28,11 +28,11 @@ let
 	global function calibrateforcing!(p::ClimateParams, rcp)
 		result = optimize(aerosolforcingfactor -> forcingerror(aerosolforcingfactor,p,rcp), -2.0, 5.0)
 		aerosolforcingfactor = Optim.minimizer(result) 	# 1.3925
-		@pack p = aerosolforcingfactor
+		@pack! p = aerosolforcingfactor
 	end
 
 	function concentrationerror(fertilization, annualemissions, p::ClimateParams, rcp)
-		@pack p = fertilization
+		@pack! p = fertilization
 		results::Vector{ClimateState} = solveclimate(annualemissions, p, 1765, endcalibration, false, rcp)
 
 		error = 0.0
@@ -48,6 +48,6 @@ let
 		
 		fertilization::Float64 = Optim.minimizer(result) 	# 0.5886
 		#println("mean concentration error: ",sqrt(Optim.minimum(result))/(endcalibration-startcalibration+1))
-		@pack p = fertilization
+		@pack! p = fertilization
 	end
 end

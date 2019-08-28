@@ -66,7 +66,7 @@ let
 		# Air-sea flux
 		NetFluxOcean = calc_NetFluxOcean(Concentration[:CO2], DeltaCO2ocean, Temp[1], oceantempfeedback)
 
-		@pack s = NetFluxOcean, DeltaDIC, DeltaDICbox, DeltaCO2ocean
+		@pack! s = NetFluxOcean, DeltaDIC, DeltaDICbox, DeltaCO2ocean
 	end
 
 	global calc_NetFluxOcean(CO2concentration, DeltaCO2ocean, Temp_mixed, oceantempfeedback) =
@@ -84,7 +84,7 @@ let
 		NetFluxOcean = calc_NetFluxOcean(Concentration[:CO2], DeltaCO2ocean, Temp[1], oceantempfeedback)
 		DeltaDICbox = [zeros(length(oceanboxtime)-1); DeltaDIC]
 
-		@pack s = Concentration, NetFluxOcean, DeltaDICbox, DeltaDIC, DeltaCO2ocean
+		@pack! s = Concentration, NetFluxOcean, DeltaDICbox, DeltaDIC, DeltaCO2ocean
 	end
 
 	global function backgroundCO2_solve(equilibriumCO2)

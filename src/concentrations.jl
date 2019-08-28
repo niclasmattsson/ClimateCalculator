@@ -12,7 +12,7 @@ let
 		@unpack timestep = p
 		dt_Concentration_CO2 = ppm_per_GtC * (emissions[:CO2] - NetFluxOcean - NetFluxBiosphere)
 		Concentration[:CO2] += timestep * dt_Concentration_CO2
-		@pack s = Concentration
+		@pack! s = Concentration
 	end
 
 	global function concentrations!(emissions, s::ClimateState, p::ClimateParams)
@@ -31,6 +31,6 @@ let
 		# ditto for N2O
 		dt_Concentration_N2O = emissions[:N2O]*ppb_per_MtN - Concentration[:N2O]/lifetime_N2O
 		Concentration[:N2O] += timestep * dt_Concentration_N2O
-		@pack s = Concentration
+		@pack! s = Concentration
 	end
 end

@@ -16,7 +16,7 @@ function readresults(annualEmissions, results, firstyear, lastyear)
     GAS3 = [:CO2, :CH4, :N2O]
     conc = getfield.(res, :Concentration)
     concentrations = Dict(g => get.(conc, g, 0.0) for g in GAS3)
-    emissions = Dict(g => get.(annualEmissions, g, 0.0)[years] for g in GAS3)
+    emissions = Dict(g => get(annualEmissions, g, 0.0)[years] for g in GAS3)
     return Dict(
             "temperature" => temp,
             "concentrations" => concentrations,
@@ -35,8 +35,8 @@ function runclimatemodel(req)
     rcp = "RCP3PD"
     annualEmissions = getscenario(rcp)
     annualEmissions[:CO2][iyear(firstyear):iyear(lastyear)] = 12/44*(cccdata["emissions"]["FossilCO2"] + cccdata["emissions"]["OtherCO2"])
-    annualEmissions[:CH4][iyear(firstyear):iyear(lastyear)] = cccdata["emissions"]["CH4"] + 270    # natural background emissions: 270 MtCH4
-    annualEmissions[:N2O][iyear(firstyear):iyear(lastyear)] = cccdata["emissions"]["N2O"] + 10.7   # natural background emissions: 10.7 MtN (TAR p253)
+    annualEmissions[:CH4][iyear(firstyear):iyear(lastyear)] = cccdata["emissions"]["CH4"] .+ 270    # natural background emissions: 270 MtCH4
+    annualEmissions[:N2O][iyear(firstyear):iyear(lastyear)] = cccdata["emissions"]["N2O"] .+ 10.7   # natural background emissions: 10.7 MtN (TAR p253)
     results, p = solveclimate(annualEmissions, usecache=true, lambda=cccdata["climatesensitivity"]/3.7, rcp=rcp)
     printresults(firstyear:10:lastyear, results, p, annualEmissions, rcp)
     response = JSON.json(readresults(annualEmissions, results, firstyear, lastyear))
@@ -54,7 +54,7 @@ function printPOSTinfo(req)
     #"<p>method: $(req[:method])<p>data: $(transcode(String, req[:data]))<p>headers: $(req[:headers])"
 end
 
-function startserver(port)
+function startserver()
     #println(dirname(@__FILE__))
     staticroute = route("static", files(dirname(@__FILE__)), Mux.notfound())
     #POSTroute = page("/user/:user", req -> "<h1>Hello, $(req[:params][:user])!</h1>")
@@ -62,12 +62,12 @@ function startserver(port)
     #POSTroute = branch(req -> req[:method] == "POST", req -> printPOSTinfo(req))
     POSTroute = branch(req -> req[:method] == "POST", req -> runclimatemodel(req))
 
-    serverstarted = isdefined(:webserver)
+    serverstarted = false #isdefined(:webserver)
     defaults = stack(Mux.todict, Mux.splitquery, Mux.toresponse)
     #@app webserver = (defaults, Mux.basiccatch, POSTroute, staticroute, Mux.notfound())
     @app webserver = (defaults, POSTroute, staticroute, Mux.notfound())
-    !serverstarted && serve(webserver, port=port)    # only run this once, modify the line with @app test = ... instead
-    println("Open http://localhost:$port/static/UI_layout.html in your web browser.")
+    !serverstarted && serve(webserver)    # only run this once, modify the line with @app test = ... instead
+    println("Open http://localhost:8000/static/UI_layout.html in your web browser.")
     # login to NAS as admin, do "sudo -i" to become root
     # cd /volume1/Sync/julia
     # nohup bin/julia -e 'using ClimateCalculator_online; @sync startserver(8000)' > serverlog.txt 2>&1 &

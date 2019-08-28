@@ -56,8 +56,8 @@ let
 
 		# We need some spatial derivatives of the temperature profile
 		dz_Temp_1 = derivative(Temp, zstep, 1)
-		dz_Temp = derivative(Temp, zstep, midlayers)
-		dz2_Temp = secondderivative(Temp, zstep, midlayers)
+		dz_Temp = derivative.(Ref(Temp), zstep, midlayers)
+		dz2_Temp = secondderivative.(Ref(Temp), zstep, midlayers)
 
 		# First boundary condition (type Dirichlet):
 		# Temp_mixed [°C]: temperature (change since preindustrial times) of mixed layer (i.e. surface ocean)
@@ -76,7 +76,7 @@ let
 
 		# time derivative of temperature [°C/year]
 		# timestep unit is [per year], so all time derivatives are also [per year]
-		dt_Temp = Vector{Float64}(maxlayers)
+		dt_Temp = Vector{Float64}(undef, maxlayers)
 
 		# Energy balance for the mixed layer
 		dt_Temp[1] = secondsperyear / (rho*mixeddepth*c) *
@@ -98,14 +98,14 @@ let
 		# Temp_global [°C]: average land & ocean temperature change since preindustrial times
 		Temp_global = marinewarming*oceanarea*Temp[1] + (1-oceanarea)*Temp_land
 
-		@pack s = Temp, Temp_land, Temp_global
+		@pack! s = Temp, Temp_land, Temp_global
 	end
 
 	global function init_temperatures!(s::ClimateState)
 		Temp = zeros(maxlayers)
 		Temp_global = 0.0		
 		Temp_land = 0.0
-		@pack s = Temp, Temp_global, Temp_land
+		@pack! s = Temp, Temp_global, Temp_land
 	end
 
 	global function stabilitycheck(timestep)

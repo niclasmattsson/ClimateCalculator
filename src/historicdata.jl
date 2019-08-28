@@ -1,4 +1,4 @@
-using JSON
+using JSON, DelimitedFiles
 import XLSX
 
 # Read a file with fixed width columns and a header row.
@@ -133,7 +133,7 @@ function historicdata()
 	forcing_RCP = Dict(r => readfixedwidth("$path/RCP/$(r)_MIDYEAR_RADFORCING.DAT", skipstart=59) for r in rcplist)
 	temperatureAnomaly = readfixedwidth("$path/AnnualTemperatures.dat")
 
-	forcing_conc_RCP = Dict(r => Dict(g => Vector{Float64}(length(YEARS)) for g in GAS) for r in rcplist)
+	forcing_conc_RCP = Dict(r => Dict(g => Vector{Float64}(undef, length(YEARS)) for g in GAS) for r in rcplist)
 	RadiativeForcing = Dict{Symbol,Float64}(g => 0.0 for g in GAS)
 
 	for r in rcplist
@@ -160,7 +160,7 @@ function historicdata()
 	#histNonCO2forcing_1 = forcing_RCP[:CH4_RF] + forcing_RCP[:N2O_RF] + forcing_RCP[:CH4OXSTRATH2O_RF] + 0.5*forcing_RCP[:TROPOZ_RF]
 
 	histTempGISS = zeros(length(YEARS))
-	histTempGISS[iyear(1880):iyear(2010)] = temperatureAnomaly[:GISS] + 0.25
+	histTempGISS[iyear(1880):iyear(2010)] = temperatureAnomaly[:GISS] .+ 0.25
 
 	return aerosolforcing, otherforcing, conc_RCP, forcing_conc_RCP, histTempGISS
 end

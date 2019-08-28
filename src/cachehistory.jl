@@ -1,7 +1,7 @@
 using ProgressMeter, JLD2, Dierckx
 
 let
-	const splineknots = [fill(0.2, 4); 0.4:0.1:1.8; fill(2.0, 4)]
+	splineknots = [fill(0.2, 4); 0.4:0.1:1.8; fill(2.0, 4)]
 	
 	splinecoeff(x, y) = Spline1D(x, y).c
 	global interpolatespline(x, coeff) = Spline1D(splineknots, coeff, 3, 3, 0.0)(x)

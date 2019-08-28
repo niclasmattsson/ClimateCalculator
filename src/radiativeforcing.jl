@@ -52,7 +52,7 @@ let
 		Concentration[:CH4] = conc_CH4_preind
 		Concentration[:N2O] = conc_N2O_preind
 
-		@pack s = Concentration, RadiativeForcing, TotalRadiativeForcing
+		@pack! s = Concentration, RadiativeForcing, TotalRadiativeForcing
 		radiativeforcing!(float(YEARS[1]), s, p, "RCP3PD")
 	end
 end

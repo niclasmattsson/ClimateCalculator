@@ -30,7 +30,7 @@ let
 		# Net increase of terrestrial biomass
 		NetFluxBiosphere = sum(dt_BioReservoir)
 
-		@pack s = NetFluxBiosphere, BioReservoir
+		@pack! s = NetFluxBiosphere, BioReservoir
 	end
 
 	global function init_biocarbon!(s::ClimateState, p::ClimateParams)
@@ -39,6 +39,6 @@ let
 		NetFluxBiosphere = 0.0
 		BioReservoir = startNPP * bioboxweight .* bioboxtime
 
-		@pack s = NetFluxBiosphere, BioReservoir
+		@pack! s = NetFluxBiosphere, BioReservoir
 	end
 end

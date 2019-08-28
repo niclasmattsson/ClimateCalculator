@@ -38,6 +38,7 @@ end
 function runscen(scen::String;  kwargs...)
 	results, p, annualemissions, rcp = solveclimate(scen;  kwargs...)
 	printresults(2010:10:2100, results, p, annualemissions, rcp)
+	results, p, annualemissions, rcp
 end
 
 solveclimate(; kwargs...) = solveclimate("2DEG";  kwargs...)
@@ -63,7 +64,7 @@ function solveclimate(annualemissions, p::ClimateParams,
 	roundedyear = firstyear >= 1800 ?  min(2010, 10*floor(Int, firstyear/10)) :  1765
 	s = initclimate(p, roundedyear, usecache)
 
-	results = Vector{ClimateState}(iyear(lastyear))
+	results = Vector{ClimateState}(undef, iyear(lastyear))
 
 	# don't run the first time step if using the cache (cached results are taken after the iteration)
 	startyear = float(roundedyear)
@@ -96,11 +97,11 @@ end
 
 function printresults(yearrange, res, p::ClimateParams, annualemissions, rcp::String="RCP45")
 	ly = length(yearrange)
-	out_carbon = Matrix(ly,3)
-	out_emissions = Matrix(ly,3)
-	out_concentration = Matrix(ly,3)
-	out_temp_forcing = Matrix(ly,6)
-	out_temp_ocean = Matrix(ly,5)
+	out_carbon = Matrix(undef, ly,3)
+	out_emissions = Matrix(undef, ly,3)
+	out_concentration = Matrix(undef, ly,3)
+	out_temp_forcing = Matrix(undef, ly,6)
+	out_temp_ocean = Matrix(undef, ly,5)
 
 	row = 0
 	for i in iyear.(yearrange)
