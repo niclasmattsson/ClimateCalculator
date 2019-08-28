@@ -1,0 +1,521 @@
+body {
+	background-color: #f4f4f4;
+	color: black;
+	font-family: Open Sans;
+	font-size: 18px;	 /* 1vw or 1.7 vh, viewport width or viewport height */
+	margin: 0;
+	overflow-x: hidden;	/* hide horizontal scrollbar */
+}
+
+header {
+}
+
+h1 {
+	font-family: Montserrat;
+	font-size: 30px;
+	font-weight: 700;
+	margin: 20px 0 15px 90px;
+}
+
+#fixdrag {
+	position: absolute;
+	top: 10px;
+	right: 20px;
+	width: 60px;
+}
+
+#settingsopen {
+	fill: #BBB;
+	position: absolute;
+	top: 15px;
+	right: 95px;
+}
+
+#settingsopen:hover {
+	fill: #B00;
+}
+
+#settingsopen:active {
+	fill: #F00;
+}
+
+#settingswindow {
+	position: absolute;
+	transition: 0.3s ease;
+	top: 5px;
+	right: -25%;
+	height: 96%;
+	width: 25%;
+	z-index: 999;
+	background: white;
+	border-radius: 5px;
+	box-shadow: 3px 5px 20px rgba(0,0,0,.4);
+}
+
+.switch-light > span {
+	width: 200px;
+}
+
+#settingsclose {
+	fill: #BBB;
+	position: absolute;
+	top: -5px;
+	right: 25px;
+}
+
+#settingsclose:hover {
+	fill: #B00;
+}
+
+#settingsclose:active {
+	fill: #F00;
+}
+
+#settingswindow h3 {
+	margin: 50px 30px 0 0;
+	font-size: 24px;
+}
+
+#settingswindow p {
+	margin: 1px 30px 0 0;
+	font-size: 14px;
+}
+
+#settingswindow > * {
+	margin: 25px 0 0 25px;
+}
+
+#settingswindow .slider {
+	width: 410px;
+	margin: 20px 0 70px 0;
+}
+
+/*	disable accidental text selection around buttons & sliders
+	IMPORTANT: make sure info text is selectable later so people can Google stuff! */
+h1, div:not(#infobox) {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: #00D;
+	text-decoration: underline;
+}
+
+a:active {
+	color: #F00;
+	text-decoration: underline;
+}
+
+
+ul {
+	margin: 0;
+}
+
+.flickity-viewport {
+	overflow: visible;
+}
+
+#figuregroup {
+	position: relative;
+	width: 100%;
+	z-index: 10;
+	/*
+	flex: 1;
+	display: flex;
+	flex-direction: row;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+	justify-content: space-between;
+	font-size: 24px;
+	text-align: center;
+	*/
+}
+
+#figuregroup figure:hover {
+	position: relative;
+	top: -1px;
+	left: -1px;
+	cursor: zoom-in;
+	box-shadow: 5px 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* weird - only seems to enter active state if clicking on figure margins, so use same shadow as "#figuregroup figure" */
+#figuregroup figure:active {
+	position: relative;
+	top: 0;
+	left: 0;
+	box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+#figuregroup figure {
+	position: relative;
+	background: white;
+	margin: 10px 10px;
+	/*height: 22vw;
+	width: 30vw;*/
+	height: 430px;
+	width: 571px;
+	/* width: 30%; /* use this when all figures are populated */
+
+	border-radius: 5px;
+	box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.1);
+
+	transition: transform 0.2s ease;
+	transform-origin: top;
+	cursor: zoom-in;
+}
+
+
+.leftfigure {
+	transform-origin: left top !important;
+}
+
+.rightfigure {
+	transform-origin: right top !important;
+}
+
+
+#figuregroup input[type=checkbox]:checked ~ figure {
+	transform: scale(1.9);
+	cursor: zoom-out;
+	box-shadow: 3px 5px 20px rgba(0,0,0,.4);
+	z-index: 2;
+}
+
+.noshadow {
+	box-shadow: none !important;
+}
+
+#figuregroup input[type=checkbox] {
+  display: none;
+}
+
+#figuregroup figure {
+	flex: 1;
+}
+
+#figuregroup figure:first-child, #figuregroup figure:last-child {
+}
+
+.flickity-viewport {
+	z-index: 2;
+}
+
+.flickity-page-dots {
+	z-index: 1;
+}
+
+#figuregroup button {
+	z-index: 3;
+	box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.1);
+}
+#csSlider {
+	width: 300px;
+	margin: 20px 0 80px 0;
+}
+
+#inputdata {
+	display: flex;
+	flex-direction: row;
+	margin: 25px 65px 0 90px;
+	justify-content: space-between;
+	z-index: 1;
+}
+
+#advancedUI {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+#advancedUI > div {
+	display: flex;
+	flex-direction: row;
+	width: 500px;
+	justify-content: space-between;
+}
+
+#simpleUI > div {
+	width: 500px;
+}
+
+#inputdata section p:not(:first-of-type) {
+	margin: 25px 0 0 0;
+}
+
+.lockCO2 {
+	margin: 5px 0 !important;
+	font-size: 14px;
+}
+
+.lockCO2 input {
+	position: relative;
+	top: 2px;
+}
+
+.hidden {
+	display: none;
+}
+
+.hiddendummy {
+	visibility: hidden;
+}
+
+#inputdata > div, #advancedUI div div {
+	display: flex;
+	flex-direction: column;
+}
+
+.noUi-horizontal {
+	top: 33px;	/* make room inside the div for the pips (large pip height + font height) */
+}
+
+.noUi-target {
+	border: none;
+	box-shadow: none;
+	background: #D3D3D3;	/* #b492bb, #d23f31, #0f9d58, #4285f4. #6a007e */
+}
+
+#csSlider .noUi-pips-horizontal {
+	width: 290px;
+	margin: 0 0 0 5px;
+}
+
+#csSlider .noUi-base {
+	width: 290px;
+}
+
+.noUi-marker-horizontal.noUi-marker-large {
+	height: 10px;
+}
+
+.noUi-value-horizontal {
+	font-size: 16px;
+}
+
+.noUi-horizontal .noUi-tooltip {
+	left: 50%;
+	padding: 1px 4px;
+	cursor: default;
+}
+
+.noUi-horizontal {
+	height: 5px;
+	border-radius: 3px;
+	margin: 0 0 90px 0;
+}
+
+.noUi-handle {
+	background: #808;
+	border: none; /* 1px solid #D3D3D3;*/
+	box-shadow: none;
+	cursor: grab;
+}
+
+.noUi-horizontal .noUi-handle {
+	width: 26px;
+	height: 26px;
+	top: -10px;
+	left: -8px;
+	border-radius: 50%;
+}
+
+.noUi-handle:before, .noUi-handle:after,
+.noUi-vertical .noUi-handle:before, .noUi-vertical .noUi-handle:after {
+	width: 0;
+	height: 0;
+}
+
+.noUi-state-tap .noUi-origin {
+	-webkit-transition: none;
+	transition: none;	/* remove the animation delay when moving a handle */
+}
+
+.noUi-horizontal .noUi-handle:focus {
+	outline: none;
+}
+
+.noUi-horizontal .noUi-handle:hover {
+	background: #a0a;
+}
+
+.noUi-horizontal .noUi-handle:active {
+	box-shadow: 0 0 12px #a0a;
+	background: #a0a;
+}
+
+.noUi-horizontal .noUi-origin[disabled] .noUi-handle {
+	background: rgb(180, 98, 180);
+}
+
+input[type=submit] {
+	font-family: Open Sans;
+	font-size: 20px;
+	font-weight: 600;
+	background: #090;
+	color: #fff;
+	border: none;
+	width: 150px;
+	height: 50px;
+	margin: 35px 0;
+}
+
+input[type=submit]:hover {
+	background: #0b0;
+}
+
+sub {
+	line-height: 0;
+}
+
+input[type=submit]:active {
+	box-shadow: 0 0 20px #0b0;
+	outline: none;
+}
+
+.scatterlayer .trace:last-child path {
+	pointer-events: all;
+}
+.xy rect:first-child {
+	cursor: default !important;		/* overrides weird arrow pan/zoom cursors in main plot area */
+}
+.plotly-notifier {
+	visibility: hidden;		/* disables tooltip: "double click to unzoom" */
+}
+.modebar-btn {
+	font-size: 12px !important;
+}
+#editemissions .modebar-btn {
+	font-size: 24px !important;
+}
+
+#emissionstext {
+	pointer-events: none;
+	position: absolute;
+	bottom: 70px;
+	left: 120px;
+}
+
+#ghostfigure {
+	position: absolute;
+	top: 83px;
+	left: 74px;
+	/*left: 75.1px;*/
+	width: 1085px;
+	height: 817px;
+	display: none;
+	box-shadow: 6px 10px 40px rgba(0, 0, 0, 0.4);
+	/*background: #f00;*/
+	z-index: 99;
+}
+
+#ghostfigure figure {
+	margin: 0;
+	width: inherit;
+	height: inherit;
+}
+
+.dragcover {
+/*	display: none;
+	z-index: 10 !important;*/
+}
+
+.thumb {
+	width: 171px;
+	height: 129px;
+	margin: 0 5px;
+}
+
+#thumbnails div {
+	margin: 0;
+	display: inline-block;
+	vertical-align: top;
+}
+
+#thumbnails p {
+	display: block;
+	margin: 0;
+	font-size: 14px;
+	text-align: center;
+}
+
+button {
+	border: 0;
+	background: #dddddd;
+	padding: 0;
+	margin: 7px 0;
+	width: 100px;
+	height: 40px;
+	font-size: 16px;
+}
+
+#infobox div {
+	margin: 20px auto;
+}
+
+#clearfigures {
+	background: #a00;
+	color: white;
+}
+
+#clearfigures:hover {
+	background: #c00;
+}
+
+#clearfigures:active {
+	box-shadow: 0 0 10px #c00;
+	outline: none;
+}
+
+
+table {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+th {
+	padding: 5px 15px;
+	font-weight: normal;
+}
+
+h3 {
+	margin: 25px 0 0 0;
+	font-size: 20px;
+}
+
+#infobox h3 {
+	text-align: center;
+}
+
+tbody tr:hover {
+	background-color: #CDF;
+	cursor: pointer;
+}
+
+tr span {
+	font-size: 1.3em;
+}
+
+.hiddenrow {
+	font-style: italic;
+	color: #AAA;
+}
+
+.activerow {
+	font-weight: 900;
+}
+
+.hiddencell {
+	color: rgba(0,0,0,0) !important;
+}

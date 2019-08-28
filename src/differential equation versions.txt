@@ -1,0 +1,90 @@
+﻿historical concentrations:
+http://www.pik-potsdam.de/~mmalte/rcps/20c3m.htm
+https://www.epa.gov/climate-indicators/climate-change-indicators-atmospheric-concentrations-greenhouse-gases
+http://www.pik-potsdam.de/~mmalte/rcps/
+
+
+
+Useful approximations for discretization of PDEs [Kajishima (2017), Computational Fluid Dynamics, pp 27-30]:
+
+one sided differences with two point stencil
+dT/dt = (T[t] - T[t-1]) / tstep + O(tstep)
+dT/dt = (T[t+1] - T[t]) / tstep + O(tstep)
+
+one sided differences with three point stencil
+dT/dt = (3*T[t] - 4*T[t-1] + T[t-2]) / (2*tstep) + O(tstep^2)
+dT/dt = (-3*T[t] + 4*T[t+1] - T[t+2]) / (2*tstep) + O(tstep^2)
+d2T/dt2 = (T[t] - 2*T[t-1] + T[t-2]) / tstep^2 + O(tstep)
+d2T/dt2 = (T[t] - 2*T[t+1] + T[t+2]) / tstep^2 + O(tstep)
+dT/dt = (-T[t] + 2*T[t-1] - 3*T[t-2]) / (2*tstep) + O(tstep^2)		[Salsa 2013 p99]
+
+central differences with three point stencil
+dT/dt = (T[t+1] - T[t-1]) / (2*tstep) + O(tstep^2)
+d2T/dt2 = (T[t-1] - 2*T[t] + T[t+1]) / tstep^2 + O(tstep^2)
+
+
+
+
+
+
+Jacobs - Simple concentration models (Introduction to Atmospheric Chemistry, chapter 3)
+
+dm/dt = E - k*m,  E = emission rate, k=1/tau
+
+finite difference (Box models & numerical differential equation methods.pdf)
+
+dm/dt ≈ (m[t] - m[t-1])/delta_t
+
+m[t] = m[t-1] + delta_t*(E - m[t-1]/tau)
+	 = m[t-1]*(1 - delta_t/tau) + delta_t * E
+
+
+
+Mimic CH4 & N2O
+concentration[t] = concentration[t_last] * (1 - tstep/lifetime) + tstep*emissions[t]
+
+d_dt_concentration = emissions(t) - concentration/lifetime
+
+Mimic deltaDIC
+deltaDICbox[t] = exp.(-tstep./tau) .* (deltaDICbox[t_last] + netfluxOcean[t_last])
+
+bioReservoir[t,:] = bioReservoir[t_last,:] .* (1 - tstep*bioQ10factor^(Temp_land[t_last]/10)./bioBoxTime) +
+			+ bioBoxWeight * bioNPP[t]
+
+d/dt(bioReservoir) = bioBoxWeight * bioNPP - bioReservoir * bioQ10factor^(Temp_land[t]/10)./bioBoxTime
+
+netfluxBiosphere[t] = sum(bioReservoir[t,:] - bioReservoir[t_last,:]) = tstep * sum(d/dt(bioReservoir[t,:]))
+
+
+Temp[t,maxlayers] = Temp[t_last,maxlayers] + tstep * (
+			K*yearseconds/10000 * (Temp[t_last,maxlayers-1] - Temp[t_last,maxlayers]) / (depth^2) +
+			+ w * (Temp[t_last,1]*pol_wat_temp - Temp[t_last,maxlayers]) / depth
+)
+
+FAIR model eq 5
+c[t] = c[t-1] + e[t] - c[t-1]*(1 - exp(-tstep/tau))
+	 = c[t-1]*exp(-tstep/tau) + e[t]
+	 ≈ c[t-1]*(1 - tstep/tau) + e[t]
+
+
+
+
+NAS stuff to fix after system update:
+
+if /opt is gone then remake the symlink and edit /etc/profile: 
+https://github.com/Entware-ng/Entware-ng/wiki/Install-on-Synology-NAS
+
+https://github.com/Entware-ng/Entware-ng
+http://pkg.entware.net/binaries/x86-64/Packages.html
+
+may need to install packages for gcc, make, gfortran etc
+may need to make symlink for cc and point to gcc
+
+
+Pkg.add packages in julia: Parameters, Optim, ProgressMeter, JLD2, Dierckx, Mux, JSON
+
+to compile Dierckx:
+add a symlink to gfortran in /opt/bin
+add lib64 to gcc/gfortran library path by adding this to /etc/profile
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/bin/gfortranfolder/lib64
+edit build.jl and change "make FC=gfortran" to "make FC=gcc"
