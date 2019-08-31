@@ -1066,7 +1066,7 @@ function setSSPhandles() {
 	var ssp = SSPscenarios["FossilCO2"][currentModel][currentSSP][currentRegion];
 	addHandle('hidden', firstDisplayYear, CO2emissionhistory[currentRegion][firstDisplayYear-backgrounddatastart]);
 	addHandle('hidden', 2010, ssp[1]);
-	addHandle('normal', 2020, force2020emissions ? force2020emissions : ssp[2]);
+	addHandle('normal', 2020, (currentRegion == "Global" && force2020emissions) ? force2020emissions : ssp[2]);
 	addHandle('normal', 2030, ssp[3]);
 	addHandle('normal', 2050, ssp[5]);
 	addHandle('normal', 2070, ssp[7]);
