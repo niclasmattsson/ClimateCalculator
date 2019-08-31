@@ -5,7 +5,7 @@ var firstDisplayYear = 2000;
 var force2020emissions = 38;	// 0 to not force
 var showSSPinsteadofHistory = false;
 var advancedmode = false;
-var reallystartadvancedmode = true;
+var reallystartadvancedmode = false;
 var csSlider = document.getElementById('csSlider');
 var emissionsfigure = document.getElementById("emissionsfigure");
 var editemissions = document.getElementById("editemissions");
@@ -975,12 +975,14 @@ function toggleLogRow(event) {
 	}
 }
 
-function logEmissions() {
+function logEmissions(update=true) {
 	// update global or regional emissions depending on what was just edited
-	if (currentRegion == "Global") {
-		regionalEmissionsFromGlobal("Global", ["OECD", "Asia", "ROW"]);		
-	} else {
-		globalEmissionsFromRegional();
+	if (update) {
+		if (currentRegion == "Global") {
+			regionalEmissionsFromGlobal("Global", ["OECD", "Asia", "ROW"]);		
+		} else {
+			globalEmissionsFromRegional();
+		}
 	}
 
 	var maxEmissions = -Infinity;
@@ -1066,6 +1068,7 @@ function setSSPhandles() {
 	addHandle('hidden', 2010, ssp[1]);
 	addHandle('normal', 2020, force2020emissions ? force2020emissions : ssp[2]);
 	addHandle('normal', 2030, ssp[3]);
+	addHandle('normal', 2050, ssp[5]);
 	addHandle('normal', 2070, ssp[7]);
 	addHandle('final', 2100, ssp[10]);
 	addHandle('spawn');
@@ -1094,11 +1097,15 @@ function getAllNormalHandles(regionlist) {
 	return handleyears;
 }
 
-function updateHandlesFromEmissions() {
-	if (currentRegion == "Global") {
-		handleyears = getAllNormalHandles(allregions);
+function updateHandlesFromEmissions(addhandles=false) {
+	if (addhandles || !handles[currentRegion].length) {
+		if (currentRegion == "Global") {
+			handleyears = getAllNormalHandles(allregions);
+		} else {
+			handleyears = getAllNormalHandles(["Global", currentRegion]);
+		}
 	} else {
-		handleyears = getAllNormalHandles(["Global", currentRegion]);
+		handleyears = getAllNormalHandles([currentRegion]);
 	}
 
 	handles[currentRegion] = [];
@@ -1177,20 +1184,22 @@ function toggleEnlargeFigure(fig) {
 			updateFigures();
 		}
 	} else {
-		setTimeout(function() {
-			ghostfigure.style.display = "block";
-			emissionsfigure.classList.add("noshadow");
-			autoScale();
-			var rect = emissionsfigure.getBoundingClientRect();
-			ghostfigure.style.width = rect.width + "px";
-			ghostfigure.style.height = rect.height + "px";
-			ghostfigure.style.top = rect.top + "px";
-			ghostfigure.style.left = rect.left + "px";
-			var text = "<p>1. Design your emission path by dragging the breakpoints.</p>";
-			text += "<p>2. If you need another breakpoint, grab the one floating in the upper left.</p>";
-			text += "<p>3. To remove a breakpoint, just drag it back to the left.</p>";
-			emissionstext.innerHTML = text;
-		}, 200);
+		if ( !(advancedmode && currentRegion == "Global") ) {
+			setTimeout(function() {
+				ghostfigure.style.display = "block";
+				emissionsfigure.classList.add("noshadow");
+				autoScale();
+				var rect = emissionsfigure.getBoundingClientRect();
+				ghostfigure.style.width = rect.width + "px";
+				ghostfigure.style.height = rect.height + "px";
+				ghostfigure.style.top = rect.top + "px";
+				ghostfigure.style.left = rect.left + "px";
+				var text = "<p>1. Design your emission path by dragging the breakpoints.</p>";
+				text += "<p>2. If you need another breakpoint, grab the one floating in the upper left.</p>";
+				text += "<p>3. To remove a breakpoint, just drag it back to the left.</p>";
+				emissionstext.innerHTML = text;
+			}, 200);
+		}
 	}
 	zoomallowed = true;
 }
@@ -1413,8 +1422,8 @@ function init() {
 		for (var i=1, len=figures.length; i<len; i++) {
 			Plotly.purge(figures[i]);
 		}
-		currentRegion = "Global";
-		currentregionnumber = 0;
+		// currentRegion = "Global";
+		// currentregionnumber = 0;
 		//updateRegionButtons();
 		/*handles = {
 			"Global": handles["Global"],
@@ -1423,14 +1432,14 @@ function init() {
 			"Asia": [],
 			"ROW": [],
 		};*/
-		updateHandlesFromEmissions();
+		updateHandlesFromEmissions(true);
 		plotEmissions(true);
 		advancedmode && plotRegionalEmissions(true);
 		plotOtherEmissions();
 		plotIntensity(true);
 		editExistingEmissions = true;
 		runlog.innerHTML = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
-		logEmissions();
+		logEmissions(false);
 		runlog.rows[0].onclick = toggleLogRow;
 		startDragBehavior();
 		figuregroup.querySelectorAll('figure .gtitle').forEach(function(x) {x.setAttribute("y", 35)});
