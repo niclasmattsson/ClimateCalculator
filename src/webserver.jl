@@ -39,8 +39,10 @@ function runclimatemodel(req)
     annualEmissions[:N2O][iyear(firstyear):iyear(lastyear)] = cccdata["emissions"]["N2O"] .+ 10.7   # natural background emissions: 10.7 MtN (TAR p253)
     results, p = solveclimate(annualEmissions, usecache=true, lambda=cccdata["climatesensitivity"]/3.7, rcp=rcp)
     printresults(firstyear:10:lastyear, results, p, annualEmissions, rcp)
-    response = JSON.json(readresults(annualEmissions, results, firstyear, lastyear))
-    return response
+    return Dict(
+        :body => JSON.json(readresults(annualEmissions, results, firstyear, lastyear)),
+        :headers => Dict("Content-Type" => "application/json")
+    )
 end
 
 function printPOSTinfo(req)
