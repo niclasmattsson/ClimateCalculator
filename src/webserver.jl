@@ -54,6 +54,8 @@ function printPOSTinfo(req)
     #"<p>method: $(req[:method])<p>data: $(transcode(String, req[:data]))<p>headers: $(req[:headers])"
 end
 
+global webserver
+
 function startserver()
     staticroute = route("static", files(@__DIR__), Mux.notfound())
     #POSTroute = page("/user/:user", req -> "<h1>Hello, $(req[:params][:user])!</h1>")
@@ -61,7 +63,7 @@ function startserver()
     #POSTroute = branch(req -> req[:method] == "POST", req -> printPOSTinfo(req))
     POSTroute = branch(req -> req[:method] == "POST", req -> runclimatemodel(req))
 
-    serverstarted = false #isdefined(:webserver)
+    serverstarted = isdefined(ClimateCalculator, :webserver)
     defaults = stack(Mux.todict, Mux.splitquery, Mux.toresponse)
     # @app webserver = (defaults, Mux.basiccatch, POSTroute, staticroute, Mux.notfound())
     @app webserver = (defaults, POSTroute, staticroute, Mux.notfound())
