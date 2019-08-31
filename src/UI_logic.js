@@ -5,6 +5,7 @@ var firstDisplayYear = 2000;
 var force2020emissions = 38;	// 0 to not force
 var showSSPinsteadofHistory = false;
 var advancedmode = false;
+var reallystartadvancedmode = true;
 var csSlider = document.getElementById('csSlider');
 var emissionsfigure = document.getElementById("emissionsfigure");
 var editemissions = document.getElementById("editemissions");
@@ -41,11 +42,11 @@ var years = range(firstYear, lastYear, 1);
 var allyears = range(backgrounddatastart, lastYear, 1);
 var historicyears = range(backgrounddatastart, 2016, 1);
 var emissions = {
-	"Global": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], Population: []},
-	"OECD": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], Population: []},
-	"Non-OECD": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], Population: []},
-	"Asia": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], Population: []},
-	"ROW": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], Population: []}
+	"Global": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: []},
+	"OECD": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: []},
+	"Non-OECD": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: []},
+	"Asia": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: []},
+	"ROW": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: []}
 };
 
 // defined externally in UI_backgrounddata.js
@@ -55,10 +56,10 @@ var emissions = {
 var figures = figuregroup.querySelectorAll("figure");
 var fig = {
 	"population": figures[0],
-	"otherCO2emissions": figures[1],
-	"intensity": figures[2],
 	"regionalintensity": undefined,
 	"regionalCO2emissions": undefined,
+	"otherCO2emissions": figures[1],
+	"intensity": figures[2],
 	"CO2emissions": figures[3],
 	"CO2concentration": figures[4],
 	"temperature": figures[5],
@@ -654,8 +655,9 @@ function plotIntensity(plotglobalfigure) {
 		for (var r=0; r<regionlist.length; r++) {
 			var reg = regionlist[r];
 			intensity[reg] = new Array(lastYear-firstYear+1);
+			var population = getSSP(reg,"Population",firstYear,lastYear);
 			for (var i=0; i<years.length; i++) {
-				intensity[reg][i] = (emissions[reg]["FossilCO2"][i] + emissions[reg]["OtherCO2"][i])/emissions[reg]["Population"][i];
+				intensity[reg][i] = (emissions[reg]["FossilCO2"][i] + emissions[reg]["OtherCO2"][i])/population[i];
 			}
 			Plotly.plot( fig["regionalintensity"], [{
 					x: years,
@@ -669,8 +671,9 @@ function plotIntensity(plotglobalfigure) {
 	} else {
 		var intensity = {};
 		intensity["Global"] = new Array(lastYear-firstYear+1);
+		var population = getSSP("Global","Population",firstYear,lastYear);
 		for (var i=0; i<years.length; i++) {
-			intensity["Global"][i] = (emissions["Global"]["FossilCO2"][i] + emissions["Global"]["OtherCO2"][i])/emissions["Global"]["Population"][i];
+			intensity["Global"][i] = (emissions["Global"]["FossilCO2"][i] + emissions["Global"]["OtherCO2"][i])/population[i];
 		}
 	}
 
@@ -691,11 +694,12 @@ function plotIntensity(plotglobalfigure) {
 
 function plotPopulation() {
 	var options = cloneObject(layout);
-	options["title"] = "Population:  " + currentRegion;
+	options["title"] = "World population";
 	options["yaxis"] = {title: "billion people", rangemode: "tozero", hoverformat: ".3f"};
+	var population = getSSP("Global","Population",firstYear,lastYear);
 	Plotly.plot( fig["population"], [{
 			x: years,
-			y: emissions[currentRegion]["Population"],
+			y: population,
 			name: ''
 			//hoverinfo: 'none'
 		}],
@@ -768,7 +772,6 @@ function plotOtherEmissions() {
 		}],
 		options, configOptions
 	)
-	fig["N2Oemissions"].querySelector('.gtitle').setAttribute("y", 35);
 
 	var options = cloneObject(layout);
 	options["title"] = "Other CO<sub>2</sub> emissions:  " + currentRegion;
@@ -780,7 +783,8 @@ function plotOtherEmissions() {
 		}],
 		options, configOptions
 	);
-	fig["otherCO2emissions"].querySelector('.gtitle').setAttribute("y", 35);
+
+	fig["N2Oemissions"].querySelector('.gtitle').setAttribute("y", 35);
 };
 
 function plotTemperature(temp) {
@@ -800,7 +804,7 @@ function plotTemperature(temp) {
 };
 
 function refreshAllEmissionFigures() {
-	var figlist = ["population", "otherCO2emissions", "CO2emissions", "CH4emissions", "N2Oemissions"]; // add Intensity (1) later
+	var figlist = ["CO2emissions", "CH4emissions", "N2Oemissions"]; // add Intensity (1) later
 	for (var i=0, len=figlist.length; i<len; i++) {
 		Plotly.purge(fig[figlist[i]]);
 	}
@@ -811,7 +815,6 @@ function refreshAllEmissionFigures() {
 		plotEmissions(r == rows.length-1);
 		advancedmode && plotRegionalEmissions(true);
 		plotOtherEmissions();
-		plotPopulation();
 	}
 	for (var i=0, len=figlist.length; i<len; i++) {
 		for (var r=0; r<rows.length; r++) {
@@ -857,15 +860,12 @@ function updateFigures() {
 			{'title': "CH<sub>4</sub> emissions:  " + currentRegion}, fig["CH4emissions"].data.length-1);
 		Plotly.update(fig["N2Oemissions"], {'y': [emissions[currentRegion]["N2O"]]},
 			{'title': "N<sub>2</sub>O emissions:  " + currentRegion}, fig["N2Oemissions"].data.length-1);
-		Plotly.update(fig["population"], {'y': [emissions[currentRegion]["Population"]]},
-			{'title': "Population:  " + currentRegion}, fig["population"].data.length-1);
 		advancedmode && plotRegionalEmissions(true);
 		plotIntensity(false);
 	} else {
 		plotEmissions();
 		advancedmode && plotRegionalEmissions(true);
 		plotOtherEmissions();
-		plotPopulation();
 		plotIntensity(true);
 		editExistingEmissions = true;
 	}
@@ -922,7 +922,6 @@ function submitEmissions() {
 				plotEmissions();
 				advancedmode && plotRegionalEmissions(true);
 				plotOtherEmissions();
-				plotPopulation();
 				plotIntensity(true);
 				addRowToLog();
 				//highlightActiveTrace([1,2,7,8],true);
@@ -966,7 +965,7 @@ function toggleLogRow(event) {
 		var rows = runlog.rows;
 		var runNumber = rows.length - Array.prototype.indexOf.call(rows, this) - 1;
 		var ishidden = this.classList.contains('hiddenrow');
-		for (var i=0, len = figures.length; i<len; i++ ) {
+		for (var i=1, len = figures.length; i<len; i++ ) {
 			if (figures[i].classList.contains('js-plotly-plot') && !figures[i].classList.contains('newfigs')) {
 				Plotly.restyle(figures[i], {opacity: 1-ishidden}, figures[i]==emissionsfigure ? runNumber+1 : runNumber);
 			}
@@ -977,11 +976,18 @@ function toggleLogRow(event) {
 }
 
 function logEmissions() {
+	// update global or regional emissions depending on what was just edited
+	if (currentRegion == "Global") {
+		regionalEmissionsFromGlobal("Global", ["OECD", "Asia", "ROW"]);		
+	} else {
+		globalEmissionsFromRegional();
+	}
+
 	var maxEmissions = -Infinity;
 	var cumulativeEmissions = 0;
 	var peakYear = firstYear;
 	for (var i=0, len=emissions["Global"]["FossilCO2"].length; i<len; i++) {
-		var emis = emissions["Global"]["FossilCO2"][i] + emissions["Global"]["OtherCO2"][i];
+		var emis = emissions["Global"]["FossilCO2"][i];
 		if (emis > maxEmissions) {
 			maxEmissions = emis;
 			peakYear = firstYear + i;
@@ -1089,17 +1095,10 @@ function getAllNormalHandles(regionlist) {
 }
 
 function updateHandlesFromEmissions() {
-	/*if (currentRegion == "Global") {
+	if (currentRegion == "Global") {
 		handleyears = getAllNormalHandles(allregions);
 	} else {
 		handleyears = getAllNormalHandles(["Global", currentRegion]);
-	}*/
-	var handleyears = [];
-	for (var h=0; h<handles[currentRegion].length; h++) {
-		handles[currentRegion][h].type == "normal" && handleyears.push(handles[currentRegion][h].x);
-	}
-	if (handleyears.length == 0) {
-		handleyears = [2020,2030,2050,2070];
 	}
 
 	handles[currentRegion] = [];
@@ -1173,12 +1172,6 @@ function toggleEnlargeFigure(fig) {
 			emissionsfigure.classList.remove("noshadow");
 			emissionsfigure.parentNode.firstChild.checked = false;
 			!editExistingEmissions && addRowToLog();
-			// update global or regional emissions depending on what was just edited
-			if (currentRegion == "Global") {
-				regionalEmissionsFromGlobal("Global", ["OECD", "Asia", "ROW"]);
-			} else {
-				globalEmissionsFromRegional();
-			}
 			logEmissions();
 			//autoScale();
 			updateFigures();
@@ -1206,18 +1199,16 @@ function changeSSP() {
 	currentSSP = this.options[this.selectedIndex].value;
 	scenariomenus[1-advancedmode].selectedIndex = this.selectedIndex;
 	this.blur();
+	if (!document.getElementById('lockCO2box1').checked) {
+		setSSPhandles();
+	}
 	!editExistingEmissions && addRowToLog();
+	logEmissions();
 	for (var r=0; r<allregions.length; r++) {
-		if (!document.getElementById('lockCO2box1').checked) {
-			emissions[allregions[r]]["FossilCO2"] = getSSP(allregions[r],"FossilCO2",firstYear,lastYear);
-		}
 		emissions[allregions[r]]["OtherCO2"] = getSSP(allregions[r],"OtherCO2",firstYear,lastYear);
 		emissions[allregions[r]]["CH4"] = getSSP(allregions[r],"CH4",firstYear,lastYear);
 		emissions[allregions[r]]["N2O"] = getSSP(allregions[r],"N2O",firstYear,lastYear);
-		emissions[allregions[r]]["Population"] = getSSP(allregions[r],"Population",firstYear,lastYear);
 	}
-	updateHandlesFromEmissions();
-	logEmissions();
 	updateFigures();
 }
 
@@ -1340,14 +1331,7 @@ function init() {
 
 	completeExternalData();
 
-	for (var r=0; r<allregions.length; r++) {
-		emissions[allregions[r]]["FossilCO2"] = getSSP(allregions[r],"FossilCO2",firstYear,lastYear);
-		emissions[allregions[r]]["OtherCO2"] = getSSP(allregions[r],"OtherCO2",firstYear,lastYear);
-		emissions[allregions[r]]["CH4"] = getSSP(allregions[r],"CH4",firstYear,lastYear);
-		emissions[allregions[r]]["N2O"] = getSSP(allregions[r],"N2O",firstYear,lastYear);
-		emissions[allregions[r]]["Population"] = getSSP(allregions[r],"Population",firstYear,lastYear);
-	}
-	updateHandlesFromEmissions();
+	setSSPhandles();
 
 	// Plot initial figures
 	putOutTheTrash();
@@ -1357,10 +1341,14 @@ function init() {
 	plotEditEmissions();
 	plotEmissions(true);
 	advancedmode && plotRegionalEmissions(true);
-
+	for (var r=0; r<allregions.length; r++) {
+		emissions[allregions[r]]["OtherCO2"] = getSSP(allregions[r],"OtherCO2",firstYear,lastYear);
+		emissions[allregions[r]]["CH4"] = getSSP(allregions[r],"CH4",firstYear,lastYear);
+		emissions[allregions[r]]["N2O"] = getSSP(allregions[r],"N2O",firstYear,lastYear);
+	}
 	plotOtherEmissions();
-	plotPopulation();
 	plotIntensity(true);
+	plotPopulation();
 	fixAutoscale();
 	autoScale();
 	updateEditEmissionsFromHandles();
@@ -1384,15 +1372,14 @@ function init() {
 	fig["CO2emissions"].classList.add("leftfigure");
 	fig["temperature"].classList.add("rightfigure");
 	carousel.on( 'select', function() {
-		figures = figuregroup.querySelectorAll("figure")
-		var index = carousel.selectedIndex;
 		var len = figures.length;
 		for (var i=0; i<len; i++ ) {
 			figures[i].classList.remove("leftfigure");
 			figures[i].classList.remove("rightfigure");
 		}
-		index > 0 && figures[index-1].classList.add("leftfigure");
-		index < len-1 && figures[index+1].classList.add("rightfigure");
+		var i = carousel.selectedIndex;
+		i > 0 && figures[i-1].classList.add("leftfigure");
+		i < len-1 && figures[i+1].classList.add("rightfigure");
 	});
 
 	logEmissions();
@@ -1423,7 +1410,7 @@ function init() {
 		document.getElementById('settingswindow').style.right = "-25%";
 	}
 	document.getElementById('clearfigures').onclick = function(e) {
-		for (var i=0, len=figures.length; i<len; i++) {
+		for (var i=1, len=figures.length; i<len; i++) {
 			Plotly.purge(figures[i]);
 		}
 		currentRegion = "Global";
@@ -1436,17 +1423,16 @@ function init() {
 			"Asia": [],
 			"ROW": [],
 		};*/
-		//updateHandlesFromEmissions();
+		updateHandlesFromEmissions();
 		plotEmissions(true);
 		advancedmode && plotRegionalEmissions(true);
 		plotOtherEmissions();
-		plotPopulation();
 		plotIntensity(true);
 		editExistingEmissions = true;
 		runlog.innerHTML = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
 		logEmissions();
 		runlog.rows[0].onclick = toggleLogRow;
-		//startDragBehavior();
+		startDragBehavior();
 		figuregroup.querySelectorAll('figure .gtitle').forEach(function(x) {x.setAttribute("y", 35)});
 	}
 	document.getElementById('clearhidden').onclick = function(e) {
@@ -1465,7 +1451,7 @@ function init() {
 				rows[i].cells[0].style = "color:" + plotlyColors[colorIndex++ % plotlyColors.length];
 			}
 		}		
-		for (var i=0, len = figures.length; i<len; i++ ) {
+		for (var i=1, len = figures.length; i<len; i++ ) {
 			if (figures[i] == fig["CO2emissions"]) {
 				Plotly.deleteTraces(fig["CO2emissions"], deleteRows.map(function(r) {return r+1}));
 			} else {
@@ -1561,6 +1547,8 @@ function init() {
 		updateFigures();
 	}
 	document.getElementById('fixdrag').onclick = startDragBehavior;
+
+	reallystartadvancedmode && document.getElementById('modetoggle').onclick();
 }
 
 // draw a dummy plot to initialize the Plotly object
@@ -1623,6 +1611,7 @@ init();
 
 
 
+// temperature in 2010 shifts with climate sensitivity => cheat for now by using deltas
 // click boxes in log to hide, click elsewhere in row to make bold and show scenario in regional charts
 
 
@@ -1645,4 +1634,5 @@ init();
 // option "show uncertainty" of climate sensitivity, run distributions
 // hover on stuff to get tooltips
 
-// maybe dashes instead of colors for regional graphs:  https://codepen.io/anon/pen/rZywqg
+// FEATURE: "make direct link to scenario", encodes scenario data for all model runs in the URL so you can save or share them
+// 			just encode background scenario and breakpoints to save URL length
