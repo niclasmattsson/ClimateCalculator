@@ -804,7 +804,7 @@ function plotTemperature(temp) {
 };
 
 function refreshAllEmissionFigures() {
-	var figlist = ["CO2emissions", "CH4emissions", "N2Oemissions"]; // add Intensity (1) later
+	var figlist = ["otherCO2emissions", "CO2emissions", "CH4emissions", "N2Oemissions"]; // add Intensity (1) later
 	for (var i=0, len=figlist.length; i<len; i++) {
 		Plotly.purge(fig[figlist[i]]);
 	}
