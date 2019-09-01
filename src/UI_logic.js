@@ -682,7 +682,7 @@ function plotIntensity(plotglobalfigure) {
 	if (plotglobalfigure) {
 		var options = cloneObject(layout);
 		options["title"] = "Fossil CO<sub>2</sub> emissions per capita";
-		options["yaxis"] = {title: "Gton CO<sub>2</sub>/person/year", rangemode: "tozero", hoverformat: ".2f"};
+		options["yaxis"] = {title: "ton CO<sub>2</sub>/person/year", rangemode: "tozero", hoverformat: ".2f"};
 		Plotly.plot( fig["intensity"], [{
 				x: years,
 				y: intensity["Global"],
