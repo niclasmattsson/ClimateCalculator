@@ -659,7 +659,7 @@ function plotIntensity(plotglobalfigure) {
 			intensity[reg] = new Array(lastYear-firstYear+1);
 			var population = getSSP(reg,"Population",firstYear,lastYear);
 			for (var i=0; i<years.length; i++) {
-				intensity[reg][i] = (emissions[reg]["FossilCO2"][i] + emissions[reg]["OtherCO2"][i])/population[i];
+				intensity[reg][i] = emissions[reg]["FossilCO2"][i]/population[i];
 			}
 			Plotly.plot( fig["regionalintensity"], [{
 					x: years,
@@ -675,13 +675,13 @@ function plotIntensity(plotglobalfigure) {
 		intensity["Global"] = new Array(lastYear-firstYear+1);
 		var population = getSSP("Global","Population",firstYear,lastYear);
 		for (var i=0; i<years.length; i++) {
-			intensity["Global"][i] = (emissions["Global"]["FossilCO2"][i] + emissions["Global"]["OtherCO2"][i])/population[i];
+			intensity["Global"][i] = emissions["Global"]["FossilCO2"][i]/population[i];
 		}
 	}
 
 	if (plotglobalfigure) {
 		var options = cloneObject(layout);
-		options["title"] = "CO<sub>2</sub> emissions per capita";
+		options["title"] = "Fossil CO<sub>2</sub> emissions per capita";
 		options["yaxis"] = {title: "Gton CO<sub>2</sub>/person/year", rangemode: "tozero", hoverformat: ".2f"};
 		Plotly.plot( fig["intensity"], [{
 				x: years,
@@ -863,7 +863,6 @@ function highlightActiveTrace(figurelist,clearactivefromallfigures) {
 
 function updateFigures() {
 	updateEditEmissionsFromHandles();
-	//console.log(emissionsfigure.data)
 	if (editExistingEmissions) {
 		Plotly.update(emissionsfigure, {'y': [emissions[currentRegion]["FossilCO2"]]},
 			{'title': "CO<sub>2</sub> emissions from fossil fuels:  " + currentRegion}, emissionsfigure.data.length-1);
