@@ -1215,12 +1215,12 @@ function changeSSP() {
 		setSSPhandles();
 	}
 	!editExistingEmissions && addRowToLog();
-	logEmissions();
 	for (var r=0; r<allregions.length; r++) {
 		emissions[allregions[r]]["OtherCO2"] = getSSP(allregions[r],"OtherCO2",firstYear,lastYear);
 		emissions[allregions[r]]["CH4"] = getSSP(allregions[r],"CH4",firstYear,lastYear);
 		emissions[allregions[r]]["N2O"] = getSSP(allregions[r],"N2O",firstYear,lastYear);
 	}
+	logEmissions();
 	updateFigures();
 }
 
