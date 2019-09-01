@@ -484,6 +484,7 @@ function addHandle(type, x, y) {
 	return newhandle;
 }
 
+// Sorts the real handles but returns a temporary object with visible handles organized by type
 function sortHandles() {
 	var len = handles[currentRegion].length;
 	handles[currentRegion].sort(function(a,b) {
@@ -924,6 +925,7 @@ function submitEmissions() {
 				plotOtherEmissions();
 				plotIntensity(true);
 				addRowToLog();
+				logEmissions(false);
 				//highlightActiveTrace([1,2,7,8],true);
 			}
 			plotConcentration(response.concentrations);
@@ -1054,7 +1056,7 @@ function regionalEmissionsFromGlobal(parentregion, subregions) {
 			emissions[subregions[r]]["FossilCO2"][i] = weighted;
 		}
 	}
-	if (numregions == 3) {
+	if (parentregion == "Global" && numregions == 3) {
 		for (var i=0; i<len; i++) {
 			emissions["Non-OECD"]["FossilCO2"][i] = emissions["Asia"]["FossilCO2"][i] + emissions["ROW"]["FossilCO2"][i];
 		}
@@ -1076,6 +1078,7 @@ function setSSPhandles() {
 
 	updateEditEmissionsFromHandles();
 	updatePointHandles();
+	// currentRegion == "Global" && globalEmissionsFromRegional();
 }
 
 function getAllNormalHandles(regionlist) {
@@ -1097,13 +1100,9 @@ function getAllNormalHandles(regionlist) {
 	return handleyears;
 }
 
-function updateHandlesFromEmissions(addhandles=false) {
-	if (addhandles || !handles[currentRegion].length) {
-		if (currentRegion == "Global") {
-			handleyears = getAllNormalHandles(allregions);
-		} else {
-			handleyears = getAllNormalHandles(["Global", currentRegion]);
-		}
+function updateHandlesFromEmissions() {
+	if (!handles[currentRegion].length) {
+		handleyears = getAllNormalHandles(["Global"]);
 	} else {
 		handleyears = getAllNormalHandles([currentRegion]);
 	}
@@ -1120,8 +1119,10 @@ function updateHandlesFromEmissions(addhandles=false) {
 	addHandle('spawn');
 	lastbreakyear = firstYear;
 
-	updateEditEmissionsFromHandles();
-	updatePointHandles();
+	if (!advancedmode || currentRegion != "Global") {
+		updateEditEmissionsFromHandles();
+		updatePointHandles();
+	}
 }
 
 function updateRegionButtons(clickedRegionButton) {
@@ -1164,6 +1165,7 @@ function updateRegionButtons(clickedRegionButton) {
 	if (currentRegion != lastRegion) {
 		updateHandlesFromEmissions();
 		refreshAllEmissionFigures();
+		// logEmissions(false);
 		//updateFigures();
 		lastRegion = currentRegion;
 	} else {
@@ -1180,6 +1182,7 @@ function toggleEnlargeFigure(fig) {
 			emissionsfigure.parentNode.firstChild.checked = false;
 			!editExistingEmissions && addRowToLog();
 			logEmissions();
+			// currentRegion == "Global" && globalEmissionsFromRegional();
 			//autoScale();
 			updateFigures();
 		}
@@ -1432,7 +1435,7 @@ function init() {
 			"Asia": [],
 			"ROW": [],
 		};*/
-		updateHandlesFromEmissions(true);
+		updateHandlesFromEmissions();
 		plotEmissions(true);
 		advancedmode && plotRegionalEmissions(true);
 		plotOtherEmissions();
@@ -1627,6 +1630,8 @@ init();
 
 // teaching point: show temperature a function of cumulative emissions, not path
 
+
+// add option in SSP menu for constant concentrations of all GHGs (for diagnostic purposes)
 
 // remove setSSPhandles(), set emissions and use updateHandlesFromEmissions instead
 // Include global land use emissions as a "region" in regional co2 emission chart
