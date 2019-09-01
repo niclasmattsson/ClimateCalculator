@@ -712,7 +712,7 @@ function plotPopulation() {
 function plotConcentration(concentrations) {
 	var options = cloneObject(layout);
 	options["title"] = "CO<sub>2</sub> concentration in the atmosphere";
-	options["yaxis"] = {title: "ppm", hoverformat: ".0f"};
+	options["yaxis"] = {title: "ppm", rangemode: "tozero", hoverformat: ".0f"};
 	Plotly.plot( fig["CO2concentration"], [{
 			x: years,
 			y: concentrations["CO2"],
@@ -725,7 +725,7 @@ function plotConcentration(concentrations) {
 
 	var options = cloneObject(layout);
 	options["title"] = "CH<sub>4</sub> concentration in the atmosphere";
-	options["yaxis"] = {title: "ppb", hoverformat: ".0f"};
+	options["yaxis"] = {title: "ppb", rangemode: "tozero", hoverformat: ".0f"};
 	Plotly.plot( fig["CH4concentration"], [{
 			x: years,
 			y: concentrations["CH4"],
@@ -738,7 +738,7 @@ function plotConcentration(concentrations) {
 
 	var options = cloneObject(layout);
 	options["title"] = "N<sub>2</sub>O concentration in the atmosphere";
-	options["yaxis"] = {title: "ppb", hoverformat: ".0f"};
+	options["yaxis"] = {title: "ppb", rangemode: "tozero", hoverformat: ".0f"};
 	Plotly.plot( fig["N2Oconcentration"], [{
 			x: years,
 			y: concentrations["N2O"],
