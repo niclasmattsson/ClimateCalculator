@@ -1000,7 +1000,7 @@ function logEmissions(update=true) {
 	var maxEmissions = -Infinity;
 	var cumulativeEmissions = 0;
 	var peakYear = firstYear;
-	for (var i=0, len=emissions["Global"]["FossilCO2"].length; i<len; i++) {
+	for (var i=2020-firstYear, len=emissions["Global"]["FossilCO2"].length; i<len; i++) {
 		var emis = emissions["Global"]["FossilCO2"][i];
 		if (emis > maxEmissions) {
 			maxEmissions = emis;
