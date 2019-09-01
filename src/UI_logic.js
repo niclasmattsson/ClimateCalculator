@@ -165,6 +165,7 @@ var dummyline3 = {
 	}
 	//hoverinfo: 'none'
 };
+var dummyline4 = cloneObject(dummyline3);
 
 function decimals(n, unit) {
 	unit = typeof unit === "undefined" ? "" : unit;
@@ -748,7 +749,7 @@ function plotConcentration(concentrations) {
 	fig["N2Oconcentration"].querySelector('.gtitle').setAttribute("y", 35);
 };
 
-function plotOtherEmissions() {
+function plotOtherEmissions(plothistory=false) {
 	var options = cloneObject(layout);
 	options["title"] = "CH<sub>4</sub> emissions:  " + currentRegion;
 	options["yaxis"] = {title: "MtCH<sub>4</sub>/year", rangemode: "tozero", hoverformat: ".0f"};
@@ -777,6 +778,15 @@ function plotOtherEmissions() {
 	var options = cloneObject(layout);
 	options["title"] = "Other CO<sub>2</sub> emissions:  " + currentRegion;
 	options["yaxis"] = {title: "Gton CO<sub>2</sub>/year", rangemode: "tozero", hoverformat: ".1f"};
+	if (false) {
+		var colorswithblack = plotlyColors.slice();
+		colorswithblack.unshift("#000");
+		options["colorway"] = colorswithblack;
+		var historicemissions = CO2emissionhistory["LANDUSE"].slice(0,2016-backgrounddatastart);
+		dummyline4.x = historicyears;
+		dummyline4.y = historicemissions;	
+		Plotly.plot( fig["otherCO2emissions"], [dummyline4], options, configOptions);
+	}
 	Plotly.plot( fig["otherCO2emissions"], [{
 			x: years,
 			y: emissions[currentRegion]["OtherCO2"],
@@ -815,7 +825,7 @@ function refreshAllEmissionFigures() {
 		emissions = rows[r].emissions;
 		plotEmissions(r == rows.length-1);
 		advancedmode && plotRegionalEmissions(true);
-		plotOtherEmissions();
+		plotOtherEmissions(r == rows.length-1);
 	}
 	for (var i=0, len=figlist.length; i<len; i++) {
 		for (var r=0; r<rows.length; r++) {
@@ -1253,6 +1263,7 @@ function completeExternalData() {
 		CO2emissionhistory["ROW"][i] = ROWemissions;
 		CO2emissionhistory["Non-OECD"][i] = NONOECDemissions;
 		CO2emissionhistory["Global"][i] = NONOECDemissions + CO2emissionhistory["OECD"][i];
+		CO2emissionhistory["LANDUSE"][i] = 44/12/1000*CO2emissionhistory["LANDUSE"][i];
 	}
 
 	// Calculate SSP emissions for fossil CO2 (total CO2 - other CO2).
@@ -1358,7 +1369,7 @@ function init() {
 		emissions[allregions[r]]["CH4"] = getSSP(allregions[r],"CH4",firstYear,lastYear);
 		emissions[allregions[r]]["N2O"] = getSSP(allregions[r],"N2O",firstYear,lastYear);
 	}
-	plotOtherEmissions();
+	plotOtherEmissions(true);
 	plotIntensity(true);
 	plotPopulation();
 	fixAutoscale();
@@ -1438,7 +1449,7 @@ function init() {
 		updateHandlesFromEmissions();
 		plotEmissions(true);
 		advancedmode && plotRegionalEmissions(true);
-		plotOtherEmissions();
+		plotOtherEmissions(true);
 		plotIntensity(true);
 		editExistingEmissions = true;
 		runlog.innerHTML = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
