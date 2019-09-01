@@ -24,11 +24,17 @@ h1 {
 	width: 60px;
 }
 
+#julialogo {
+	position: absolute;
+	top: 	0px;
+	right: 170px;
+}
+
 #settingsopen {
 	fill: #BBB;
 	position: absolute;
-	top: 15px;
-	right: 95px;
+	top: 17px;
+	right: 105px;
 }
 
 #settingsopen:hover {
@@ -496,6 +502,7 @@ h3 {
 
 #infobox h3 {
 	text-align: center;
+	margin-bottom: 10px;
 }
 
 tbody tr:hover {
