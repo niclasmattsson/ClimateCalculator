@@ -1337,6 +1337,8 @@ function init() {
 		},
 		format: decimals(0)
 	});
+	yearSelectionSlider.querySelectorAll(".noUi-origin")[1].setAttribute('disabled', 'true');
+	yearSelectionSlider.querySelectorAll(".noUi-origin")[2].setAttribute('disabled', 'true');
 
 	noUiSlider.create(harmonizationSlider, {
 		start: harmonizationfactor,

@@ -24,6 +24,13 @@ h1 {
 	width: 60px;
 }
 
+#logotext {
+	position: absolute;
+	top: 	5px;
+	right: 200px;
+	font-size: 10px;
+}
+
 #julialogo {
 	position: absolute;
 	top: 	0px;
@@ -466,7 +473,12 @@ button {
 	font-size: 16px;
 }
 
-#infobox div {
+#infobox div:first-of-type {
+	max-height: 400px;
+	overflow: auto;
+}
+
+#infobox div:last-child {
 	margin: 20px auto;
 }
 
@@ -525,4 +537,9 @@ tr span {
 
 .hiddencell {
 	color: rgba(0,0,0,0) !important;
+}
+
+#bugnote {
+	font-size: 14px;
+	color: #777;
 }
