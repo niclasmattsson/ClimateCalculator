@@ -646,7 +646,7 @@ function plotIntensity(plotglobalfigure) {
 		var options = cloneObject(layout);
 		options["colorway"] = ["#555", "#C44", "#44C", "#4C4"];
 		options["title"] = "CO<sub>2</sub> emissions per capita:  Regional";
-		options["yaxis"] = {title: "Gton CO<sub>2</sub>/person/year", rangemode: "tozero", hoverformat: ".2f"};
+		options["yaxis"] = {title: "ton CO<sub>2</sub>/person/year", rangemode: "tozero", hoverformat: ".2f"};
 		var nregions = document.getElementById('numberregions').selectedIndex;
 		if (nregions == 2) {
 			var regionlist = ["Global", "Asia", "OECD", "ROW"];
