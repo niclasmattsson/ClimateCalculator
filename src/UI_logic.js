@@ -778,7 +778,7 @@ function plotOtherEmissions(plothistory=false) {
 	var options = cloneObject(layout);
 	options["title"] = "Other CO<sub>2</sub> emissions:  " + currentRegion;
 	options["yaxis"] = {title: "Gton CO<sub>2</sub>/year", rangemode: "tozero", hoverformat: ".1f"};
-	if (false) {
+	if (plothistory) {
 		var colorswithblack = plotlyColors.slice();
 		colorswithblack.unshift("#000");
 		options["colorway"] = colorswithblack;
