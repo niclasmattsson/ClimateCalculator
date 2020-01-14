@@ -9,7 +9,7 @@ and webserver backend in Julia 1.x.
 Type `]` to enter Julia's package mode, then:
 
 ```
-(v1.2) pkg> add ClimateCalculator
+(v1.3.1) pkg> add ClimateCalculator
 ```
 
 After the installation, hit backspace at the prompt to exit package mode.
@@ -58,9 +58,9 @@ design individual CO<sub>2</sub> emission pathways for major regions of the worl
 
 ## How the model works
 
-[user input of base scenario + designed CO<sub>2</sub> emissions path] -> Emissions -> [model carbon cycle] ->
-Concentrations -> [user input of climate sensitivity] -> Temperature. 
+\[user input of base scenario + designed CO<sub>2</sub> emissions path\] -> Emissions -> \[model carbon cycle\] ->
+Concentrations -> \[user input of climate sensitivity\] -> Temperature. 
 
 ## Model documentation
 
-Later baby.
+To do.
