@@ -72,9 +72,10 @@ function startserver()
     !serverstarted && serve(webserver)    # only run this once, modify the line with @app test = ... instead
     println("Open http://localhost:8000/static/UI_layout.html in your web browser.")
     # login to NAS as admin, do "sudo -i" to become root
-    # cd /volume1/Sync/julia
-    # nohup bin/julia -e 'using ClimateCalculator_online; @sync startserver(8000)' > serverlog.txt 2>&1 &
-    # nohup bin/julia -e 'using ClimateCalculator_online; @sync startserver(8000)' > /dev/null 2>&1 &
+    # cd /volume1/Sync/julia-1.3.1
+    # nohup bin/julia -e 'using ClimateCalculator; @sync startserver(); wait(Condition())' > serverlog.txt 2>&1 &
+    # the @sync prefix might not be needed anymore
+    # nohup bin/julia -e 'using ClimateCalculator; @sync startserver(); wait(Condition())' > /dev/null 2>&1 &
     # ps ax | grep julia
     # kill procnumber
 end
