@@ -9,7 +9,7 @@ and webserver backend in Julia 1.x.
 Type `]` to enter Julia's package mode, then:
 
 ```
-(v1.3.1) pkg> add ClimateCalculator
+(v1.3.1) pkg> add https://github.com/niclasmattsson/ClimateCalculator
 ```
 
 After the installation, hit backspace at the prompt to exit package mode.
