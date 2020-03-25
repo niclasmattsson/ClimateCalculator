@@ -66,7 +66,7 @@ function startserver()
     POSTroute = branch(req -> req[:method] == "POST", req -> runclimatemodel(req))
 
     serverstarted = isdefined(ClimateCalculator, :webserver)
-    defaults = stack(Mux.todict, Mux.splitquery, Mux.toresponse)
+    defaults = Mux.stack(Mux.todict, Mux.splitquery, Mux.toresponse)
     # @app webserver = (defaults, Mux.basiccatch, POSTroute, staticroute, Mux.notfound())
     @app webserver = (defaults, POSTroute, staticroute, Mux.notfound())
     !serverstarted && serve(webserver)    # only run this once, modify the line with @app test = ... instead
