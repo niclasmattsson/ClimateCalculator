@@ -9,7 +9,7 @@ and webserver backend in Julia 1.x.
 Type `]` to enter Julia's package mode, then:
 
 ```
-(v1.3.1) pkg> add https://github.com/niclasmattsson/ClimateCalculator
+(@v1.4) pkg> add https://github.com/niclasmattsson/ClimateCalculator
 ```
 
 After the installation, hit backspace at the prompt to exit package mode.
@@ -27,7 +27,7 @@ julia>
 
 Copy that URL to your browser to load the model. Resize the text using your browser's zoom feature
 (from the menu or with `CTRL +` and `CTRL -`) so that three graph boxes fit completely. Click
-the green "RUN MODEL" button. The first run takes about 5 seconds, but subsequent runs should be
+the green "RUN MODEL" button. The first run may take 5-10 seconds, but subsequent runs should be
 virtually instantaneous.
 
 ## Usage tips
@@ -54,7 +54,10 @@ temporary workaround, try clicking the "Fix" button in the upper right corner to
 ### Advanced mode
 
 Click the cogwheel in the upper right to find the toggle for advanced mode. In advanced mode, you can
-design individual CO<sub>2</sub> emission pathways for major regions of the world.
+design individual CO<sub>2</sub> emission pathways for major regions of the world. In a future version of
+ClimateCalculator you will be able to design pathways for methane and nitrous oxide as well but this
+feature has not yet been enabled. (But you can currently select alternative pathways for
+non-CO<sub>2</sub> gases according to preset SSP scenarios using the dropdown menu "Base scenario".)
 
 ## How the model works
 
