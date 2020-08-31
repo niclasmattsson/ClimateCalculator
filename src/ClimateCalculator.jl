@@ -3,7 +3,7 @@ module ClimateCalculator
 using Parameters, Optim
 
 export runscen, solveclimate, getscenario, calibrateforcing!, calibratefertilization!, printresults, iyear,
-		ClimateState, ClimateParams, annualresults, makecalibrationcache, startserver
+		ClimateState, ClimateParams, annualresults, makecalibrationcache, startserver, importGlobalCarbonProject
 
 const YEARS				= 1765:2500
 const GAS				= [:CO2, :CH4, :N2O, :H2O, :O3]
@@ -70,5 +70,6 @@ include("historicdata.jl")
 include("calibrate.jl")
 include("cachehistory.jl")
 include("webserver.jl")
+include("importGlobalCarbonProject.jl")
 
 end
