@@ -61,8 +61,11 @@ non-CO<sub>2</sub> gases according to preset SSP scenarios using the dropdown me
 
 ## How the model works
 
-\[user input of base scenario + designed CO<sub>2</sub> emissions path\] -> Emissions -> \[model carbon cycle\] ->
-Concentrations -> \[user input of climate sensitivity\] -> Temperature. 
+### Simplified graphical representation
+![Simplified graphical representation](https://github.com/niclasmattsson/ClimateCalculator/blob/master/CCCsimple.png)
+
+### Full graphical representation including feedbacks
+![Full graphical representation](https://github.com/niclasmattsson/ClimateCalculator/blob/master/CCCfull.png)
 
 ## Model documentation
 
