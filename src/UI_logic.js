@@ -866,6 +866,8 @@ function updateFigures() {
 	if (editExistingEmissions) {
 		Plotly.update(emissionsfigure, {'y': [emissions[currentRegion]["FossilCO2"]]},
 			{'title': "CO<sub>2</sub> emissions from fossil fuels:  " + currentRegion}, emissionsfigure.data.length-1);
+		Plotly.update(fig["otherCO2emissions"], {'y': [emissions[currentRegion]["OtherCO2"]]},
+			{'title': "Other CO<sub>2</sub> emissions:  " + currentRegion}, fig["otherCO2emissions"].data.length-1);
 		Plotly.update(fig["CH4emissions"], {'y': [emissions[currentRegion]["CH4"]]},
 			{'title': "CH<sub>4</sub> emissions:  " + currentRegion}, fig["CH4emissions"].data.length-1);
 		Plotly.update(fig["N2Oemissions"], {'y': [emissions[currentRegion]["N2O"]]},
