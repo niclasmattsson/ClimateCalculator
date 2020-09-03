@@ -59,12 +59,10 @@ ClimateCalculator you will be able to design pathways for methane and nitrous ox
 feature has not yet been enabled. (But you can currently select alternative pathways for
 non-CO<sub>2</sub> gases according to preset SSP scenarios using the dropdown menu "Base scenario".)
 
-## How the model works
-
-### Simplified graphical representation
+## How the model works - simplified graphical representation
 ![Simplified graphical representation](https://github.com/niclasmattsson/ClimateCalculator/blob/master/CCCsimple.png)
 
-### Full graphical representation including feedbacks
+## Full graphical representation including feedbacks
 ![Full graphical representation](https://github.com/niclasmattsson/ClimateCalculator/blob/master/CCCfull.png)
 
 ## Model documentation
