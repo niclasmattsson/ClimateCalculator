@@ -39,8 +39,9 @@ var handles = {
 };
 var lastbreakyear;
 var years = range(firstYear, lastYear, 1);
+var backgrounddataend = backgrounddatastart + CO2emissionhistory.OECD.length - 1;
 var allyears = range(backgrounddatastart, lastYear, 1);
-var historicyears = range(backgrounddatastart, 2016, 1);
+var historicyears = range(backgrounddatastart, backgrounddataend, 1);
 var emissions = {
 	"Global": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: []},
 	"OECD": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: []},
@@ -527,7 +528,7 @@ function updateEditEmissionsFromHandles() {
 	emissions[currentRegion]["FossilCO2"] = interpolateCubicHermite(years, sortedhandles.x, sortedhandles.y);
 	//Plotly.restyle(emissionsfigure, {'x': [years], 'y': [emissions[currentRegion]["FossilCO2"]]});
 	if (!showSSPinsteadofHistory) {
-		var historicemissions = CO2emissionhistory[currentRegion].slice(0,2016-backgrounddatastart);
+		var historicemissions = CO2emissionhistory[currentRegion].slice(0,backgrounddataend-backgrounddatastart+1);
 		Plotly.restyle(editemissions, {
 			'x': [years, historicyears, sortedhandles.xvis],
 			'y': [emissions[currentRegion]["FossilCO2"], historicemissions, sortedhandles.yvis],
@@ -590,7 +591,7 @@ function plotEmissions(plothistory=false) {
 	options["yaxis"] = {title: "Gton CO<sub>2</sub>/year", rangemode: "tozero", hoverformat: ".1f"};
 	if (plothistory) {
 		if (!showSSPinsteadofHistory) {
-			var historicemissions = CO2emissionhistory[currentRegion].slice(0,2016-backgrounddatastart);
+			var historicemissions = CO2emissionhistory[currentRegion].slice(0,backgrounddataend-backgrounddatastart+1);
 			dummyline3.x = historicyears;
 			dummyline3.y = historicemissions;	
 		} else {
@@ -615,7 +616,7 @@ function plotRegionalEmissions(plothistory=false) {
 	options["yaxis"] = {title: "Gton CO<sub>2</sub>/year", rangemode: "tozero", hoverformat: ".1f"};
 	Plotly.purge(fig["regionalCO2emissions"]);
 	if (plothistory) {
-		var historicemissions = CO2emissionhistory[currentRegion].slice(0,2016-backgrounddatastart);
+		var historicemissions = CO2emissionhistory[currentRegion].slice(0,backgrounddataend-backgrounddatastart+1);
 		dummyline3.x = historicyears;
 		dummyline3.y = historicemissions;	
 		Plotly.plot( fig["regionalCO2emissions"], [dummyline3], options, configOptions);
@@ -782,7 +783,7 @@ function plotOtherEmissions(plothistory=false) {
 		var colorswithblack = plotlyColors.slice();
 		colorswithblack.unshift("#000");
 		options["colorway"] = colorswithblack;
-		var historicemissions = CO2emissionhistory["LANDUSE"].slice(0,2016-backgrounddatastart);
+		var historicemissions = CO2emissionhistory["LANDUSE"].slice(0,backgrounddataend-backgrounddatastart+1);
 		dummyline4.x = historicyears;
 		dummyline4.y = historicemissions;	
 		Plotly.plot( fig["otherCO2emissions"], [dummyline4], options, configOptions);
@@ -1121,7 +1122,9 @@ function updateHandlesFromEmissions() {
 	handles[currentRegion] = [];
 	var emis = emissions[currentRegion]["FossilCO2"]
 	addHandle('hidden', firstDisplayYear, CO2emissionhistory[currentRegion][firstDisplayYear-backgrounddatastart]);
-	addHandle('hidden', firstYear, emis[0]);
+	addHandle('hidden', firstYear, CO2emissionhistory[currentRegion][firstYear-backgrounddatastart]);
+	// addHandle('hidden', firstYear, emis[0]);
+	addHandle('hidden', backgrounddataend, CO2emissionhistory[currentRegion][backgrounddataend-backgrounddatastart]);
 	for (var h=0; h<handleyears.length; h++) {
 		var yr = handleyears[h];
 		addHandle('normal', yr, emis[yr-firstYear]);
