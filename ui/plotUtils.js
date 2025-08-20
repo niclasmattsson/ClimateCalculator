@@ -236,3 +236,141 @@ function plotTemperature(temp) {
     fig["temperature"].querySelector('.gtitle .line').setAttribute("y", 35);
     fig["temperature"].querySelector('.gtitle .line:last-Child').setAttribute("y", 35);
 };
+
+function autoScale(e) {
+    if (e) {
+        fig = e.target ? e.target : emissionsfigure;
+        while (fig && fig.nodeName != "FIGURE") {
+            fig = fig.parentNode;
+        }
+    } else {
+        var fig = editemissions;
+    }
+    var ydata = fig.data[0].y;
+    var min = Math.min(0, Math.min.apply(null, ydata)) * 1.1;
+    var max = Math.max.apply(null, ydata) * 1.1;
+    Plotly.relayout(fig, { 'yaxis.range': [min, max] });
+    for (var i = 0, len = handles[currentRegion].length; i < len; i++) {
+        if (handles[currentRegion][i].type == 'spawn') {
+            handles[currentRegion][i].x = editemissions._fullLayout.xaxis.p2l(xspawn);
+            handles[currentRegion][i].y = editemissions._fullLayout.yaxis.p2l(yspawn);
+        }
+    }
+    updateEditEmissionsFromHandles();
+    e && e.preventDefault();
+    e && e.stopPropagation();
+}
+
+// The default autoscaleButton is annoying. It's not a one-off autoscale, it sets autorange to true every time it is used.
+// We could call Plotly.update() instead of Plotly.restyle() in updateEditEmissionsFromHandles(), but that seems to slow things down.
+// So let's change the button instead.
+function fixAutoscale() {
+    // First we replace the autoscaleButton with a clone in order to kill all its events.
+    var buttons = document.querySelectorAll('[data-title="Autoscale"]');
+    for (var i = 0, len = buttons.length; i < len; i++) {
+        var autoscaleButton = buttons[i];
+        var clonedButton = autoscaleButton.cloneNode(true);
+        autoscaleButton.parentNode.replaceChild(clonedButton, autoscaleButton);
+        // Now let's add our own click event that calls a custom autoscale function.
+        clonedButton.onclick = function (e) {
+            autoScale(e);
+        }
+    }
+}
+
+function putOutTheTrash() {
+    var pointscontainer = editemissions.querySelector(".scatterlayer .trace:nth-of-type(3) g");
+    var trashsize = trash.getAttribute("width");
+    pointscontainer.parentNode.insertBefore(trash, pointscontainer);
+    pointscontainer.parentNode.insertBefore(trash, pointscontainer);
+    trash.setAttribute("transform", "translate(" + (xspawn - trashsize / 2 - 0) + "," + (yspawn - trashsize / 2 - 2) + ")");
+    trash.setAttribute("transform", "translate(" + (xspawn - trashsize / 2 - 0) + "," + (yspawn - trashsize / 2 - 2) + ")");
+    trash.setAttribute("display", "none");
+    trash.setAttribute("display", "none");
+}
+
+function refreshAllEmissionFigures() {
+    var figlist = ["population", "otherCO2emissions", "CO2emissions", "CH4emissions", "N2Oemissions"]; // add Intensity (1) later
+    for (var i = 0, len = figlist.length; i < len; i++) {
+        Plotly.purge(fig[figlist[i]]);
+    }
+    var rows = runlog.rows;
+    var currentEmissions = cloneObject(emissions);
+    for (var r = rows.length - 1; r >= 0; r--) {
+        emissions = rows[r].emissions;
+        plotEmissions(r == rows.length - 1);
+        advancedmode && plotRegionalEmissions(true);
+        plotOtherEmissions();
+        plotPopulation();
+    }
+    for (var i = 0, len = figlist.length; i < len; i++) {
+        for (var r = 0; r < rows.length; r++) {
+            var ishidden = rows[r].classList.contains('hiddenrow');
+            Plotly.restyle(fig[figlist[i]], { opacity: 1 - ishidden }, r);
+        }
+    }
+    emissions = currentEmissions;
+    figuregroup.querySelectorAll('figure .gtitle').forEach(function (x) { x.setAttribute("y", 35) });
+}
+
+function highlightActiveTrace(figurelist, clearactivefromallfigures) {
+    var rows = runlog.rows;
+    for (var r = 0, len = rows.length; r < len; r++) {
+        if (rows[r].classList.contains("activerow")) {
+            var runNumber = len - r - 1;
+        }
+    }
+
+    var clearlist = clearactivefromallfigures ? [1, 2, 3, 4, 5, 6, 7, 8] : figurelist;
+    for (var i = 0, len = clearlist.length; i < len; i++) {
+        var fig = figures[clearlist[i]];
+        if (fig.classList.contains('js-plotly-plot') && !fig.classList.contains('newfigs')) {
+            Plotly.restyle(fig, { line: { width: 2 } });
+        }
+    }
+
+    for (var i = 0, len = figurelist.length; i < len; i++) {
+        var fig = figures[figurelist[i]];
+        if (fig.classList.contains('js-plotly-plot') && !fig.classList.contains('newfigs')) {
+            Plotly.restyle(fig, { line: { width: 3 } }, fig == emissionsfigure ? runNumber + 1 : runNumber);
+        }
+    }
+}
+
+function updateFigures() {
+    updateEditEmissionsFromHandles();
+    //console.log(emissionsfigure.data)
+    if (editExistingEmissions) {
+        Plotly.update(emissionsfigure, { 'y': [emissions[currentRegion]["FossilCO2"]] },
+            { 'title': "CO<sub>2</sub> emissions from fossil fuels:  " + currentRegion }, emissionsfigure.data.length - 1);
+        Plotly.update(fig["CH4emissions"], { 'y': [emissions[currentRegion]["CH4"]] },
+            { 'title': "CH<sub>4</sub> emissions:  " + currentRegion }, fig["CH4emissions"].data.length - 1);
+        Plotly.update(fig["N2Oemissions"], { 'y': [emissions[currentRegion]["N2O"]] },
+            { 'title': "N<sub>2</sub>O emissions:  " + currentRegion }, fig["N2Oemissions"].data.length - 1);
+        Plotly.update(fig["population"], { 'y': [emissions[currentRegion]["Population"]] },
+            { 'title': "Population:  " + currentRegion }, fig["population"].data.length - 1);
+        advancedmode && plotRegionalEmissions(true);
+        plotIntensity(false);
+    } else {
+        plotEmissions();
+        advancedmode && plotRegionalEmissions(true);
+        plotOtherEmissions();
+        plotPopulation();
+        plotIntensity(true);
+        editExistingEmissions = true;
+    }
+    var nyears = lastYear - firstYear + 1;
+    var intensity = new Array(nyears);
+    var population = getSSP("Global", "Population", firstYear, lastYear);
+    for (var i = 0; i < nyears; i++) {
+        intensity[i] = emissions["Global"]["FossilCO2"][i] / population[i];
+    }
+    Plotly.restyle(fig["intensity"], 'y', [intensity], fig["intensity"].data.length - 1);
+    //highlightActiveTrace([1,2,7,8],true);
+    figuregroup.querySelectorAll('figure .gtitle').forEach(function (x) { x.setAttribute("y", 35) });
+};
+
+function showLastEmissionTrace(show) {
+    Plotly.restyle(emissionsfigure, 'visible', show, emissionsfigure.data.length - 1);
+    Plotly.restyle(fig["intensity"], 'visible', show, fig["intensity"].data.length - 1);
+}

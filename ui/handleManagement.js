@@ -76,6 +76,27 @@ function startDragBehavior() {
     });
 }
 
+function updateEmissionText(handle, extratext) {
+    var i = 0;
+    while (handles[currentRegion][++i] != handle) {
+    }
+    var prevhandle = handles[currentRegion][i - 1];
+    var nexthandle = i + 1 < handles[currentRegion].length ? handles[currentRegion][i + 1] : null;
+    var helptext = i == handles[currentRegion].length - 1 ? '<p><font color="red">The last breakpoint is locked at 2100.</font></p>' : '';
+    var text0 = "<p>Breakpoint (" + handle.x.toFixed(0) + "):&nbsp;&nbsp;";
+    text0 += handle.y.toFixed(1) + " Gton CO<sub>2</sub> /year</p>";
+    var growth1 = Math.pow(handle.y / prevhandle.y, 1 / (handle.x - prevhandle.x)) - 1;
+    var text1 = "<p>Growth (" + prevhandle.x.toFixed(0) + "-" + handle.x.toFixed(0) + "):&nbsp;&nbsp;";
+    text1 += (growth1 > 0 ? "+" : "") + (100 * growth1).toFixed(1) + " %/year</p>";
+    var text2 = ""
+    if (nexthandle) {
+        var growth2 = Math.pow(nexthandle.y / handle.y, 1 / (nexthandle.x - handle.x)) - 1;
+        text2 += "<p>Growth (" + handle.x.toFixed(0) + "-" + nexthandle.x.toFixed(0) + "):&nbsp;&nbsp;";
+        text2 += (growth2 > 0 ? "+" : "") + (100 * growth2).toFixed(1) + " %/year</p>";
+    }
+    emissionstext.innerHTML = extratext + helptext + text0 + text1 + text2;
+}
+
 function destroyHandle(handle) {
     var i = handles[currentRegion].indexOf(handle);
     handles[currentRegion].splice(i,1);
