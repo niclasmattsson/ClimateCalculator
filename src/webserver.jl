@@ -18,9 +18,9 @@ function readresults(annualEmissions, results, firstyear, lastyear)
 end
 
 function startserver()
-    staticfiles(@__DIR__, "static")
+    staticfiles(joinpath(dirname(@__DIR__), "ui"), "/")
 
-    @post "/static/runccc" function(req::HTTP.Request)
+    @post "/runccc" function(req::HTTP.Request)
         cccdata = JSON.parse(String(req.body))
         
         firstyear = cccdata["firstyear"]
@@ -38,6 +38,6 @@ function startserver()
         return JSON.json(readresults(annualEmissions, results, firstyear, lastyear))
     end
 
-    println("Open http://localhost:8000/static/UI_layout.html in your web browser.")
+    println("Open http://localhost:8000/ClimateCalculator.html in your web browser.")
     serve(; show_banner=false, port=8000)
 end
