@@ -25,7 +25,7 @@ function plotEmissions(plothistory=false) {
     options["yaxis"] = {title: "Gton CO<sub>2</sub>/year", rangemode: "tozero", hoverformat: ".1f"};
     if (plothistory) {
         if (!showSSPinsteadofHistory) {
-            var historicemissions = CO2emissionhistory[currentRegion].slice(0,2016-backgrounddatastart);
+            var historicemissions = CO2emissionhistory[currentRegion].slice(0,lasthistoricyear+1-backgrounddatastart);
             dummyline3.x = historicyears;
             dummyline3.y = historicemissions;	
         } else {
@@ -50,7 +50,7 @@ function plotRegionalEmissions(plothistory=false) {
     options["yaxis"] = {title: "Gton CO<sub>2</sub>/year", rangemode: "tozero", hoverformat: ".1f"};
     Plotly.purge(fig["regionalCO2emissions"]);
     if (plothistory) {
-        var historicemissions = CO2emissionhistory[currentRegion].slice(0,2016-backgrounddatastart);
+        var historicemissions = CO2emissionhistory[currentRegion].slice(0,lasthistoricyear+1-backgrounddatastart);
         dummyline3.x = historicyears;
         dummyline3.y = historicemissions;	
         Plotly.plot( fig["regionalCO2emissions"], [dummyline3], options, configOptions);

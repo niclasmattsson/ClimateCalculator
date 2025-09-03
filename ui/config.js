@@ -37,9 +37,10 @@ var handles = {
     "ROW": [],
 };
 var lastbreakyear;
+var lasthistoricyear = 2023;
 var years = range(firstYear, lastYear, 1);
 var allyears = range(backgrounddatastart, lastYear, 1);
-var historicyears = range(backgrounddatastart, 2016, 1);
+var historicyears = range(backgrounddatastart, lasthistoricyear+1, 1);
 var emissions = {
     "Global": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], Population: []},
     "OECD": {FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], Population: []},

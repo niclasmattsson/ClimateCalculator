@@ -149,7 +149,7 @@ function updateEditEmissionsFromHandles() {
     emissions[currentRegion]["FossilCO2"] = interpolateCubicHermite(years, sortedhandles.x, sortedhandles.y);
     //Plotly.restyle(emissionsfigure, {'x': [years], 'y': [emissions[currentRegion]["FossilCO2"]]});
     if (!showSSPinsteadofHistory) {
-        var historicemissions = CO2emissionhistory[currentRegion].slice(0,2016-backgrounddatastart);
+        var historicemissions = CO2emissionhistory[currentRegion].slice(0, lasthistoricyear+1-backgrounddatastart);
         Plotly.restyle(editemissions, {
             'x': [years, historicyears, sortedhandles.xvis],
             'y': [emissions[currentRegion]["FossilCO2"], historicemissions, sortedhandles.yvis],
