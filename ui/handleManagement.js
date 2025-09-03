@@ -20,7 +20,10 @@ function startDragBehavior() {
         if (this.handle.type != 'spawn') {
             trash.setAttribute("display", "inline");
             trash.style.fill = "rgba(0,0,0,.2)";
-            destroyHandle(points[0].handle);
+            var spawnHandle = handles[currentRegion].find(h => h.type === 'spawn');
+            if (spawnHandle) {
+                spawnHandle.type = 'hidden';
+            }
         }
     });
     drag.on("drag", function() {
@@ -52,7 +55,18 @@ function startDragBehavior() {
     });
     drag.on("dragend", function(e) {
         if (this.handle.x < lastbreakyear) destroyHandle(this.handle);
-        addHandle('spawn');
+        
+        var hiddenSpawnHandle = handles[currentRegion].find(h => h.type === 'hidden' && 
+            Math.abs(h.x - editemissions._fullLayout.xaxis.p2l(xspawn)) < 1);
+        if (hiddenSpawnHandle) {
+            hiddenSpawnHandle.type = 'spawn';
+        } else {
+            var existingSpawn = handles[currentRegion].find(h => h.type === 'spawn');
+            if (!existingSpawn) {
+                addHandle('spawn');
+            }
+        }
+        
         updateEditEmissionsFromHandles();
         updatePointHandles();
         trash.setAttribute("display", "none");
