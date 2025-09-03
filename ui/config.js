@@ -2,6 +2,7 @@
 var firstYear = 2010;
 var lastYear = 2100;
 var firstDisplayYear = 2000;
+var firstBreakpoint = {year: 2025, emissions: 38};  // set to null to disable
 var showSSPinsteadofHistory = false;
 var advancedmode = false;
 var csSlider = document.getElementById('csSlider');

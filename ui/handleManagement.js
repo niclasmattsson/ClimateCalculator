@@ -245,7 +245,13 @@ function updateHandlesFromEmissions() {
     addHandle('hidden', firstYear, emis[0]);
     for (var h=0; h<handleyears.length; h++) {
         var yr = handleyears[h];
-        addHandle('normal', yr, emis[yr-firstYear]);
+        if (h == 0 && firstBreakpoint) {
+            var ssp = SSPscenarios["FossilCO2"][currentModel][currentSSP][currentRegion];
+            var scalefactor = firstBreakpoint.emissions / emissions["Global"]["FossilCO2"][yr - firstYear];
+            addHandle('normal', firstBreakpoint.year, emis[yr - firstYear] * scalefactor);
+        } else {
+            addHandle('normal', yr, emis[yr - firstYear]);            
+        }
     }
     addHandle('final', 2100, emis[2100-firstYear]);
     addHandle('spawn');
