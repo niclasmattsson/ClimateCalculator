@@ -2,7 +2,6 @@
 var firstYear = 2010;
 var lastYear = 2100;
 var firstDisplayYear = 2000;
-var force2020emissions = 38;	// 0 to not force
 var showSSPinsteadofHistory = false;
 var advancedmode = false;
 var csSlider = document.getElementById('csSlider');
