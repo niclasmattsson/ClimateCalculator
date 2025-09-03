@@ -22,7 +22,7 @@ function startDragBehavior() {
             trash.style.fill = "rgba(0,0,0,.2)";
             var spawnHandle = handles[currentRegion].find(h => h.type === 'spawn');
             if (spawnHandle) {
-                spawnHandle.type = 'hidden';
+                spawnHandle.type = 'hiddenspawn';
             }
         }
     });
@@ -56,8 +56,7 @@ function startDragBehavior() {
     drag.on("dragend", function(e) {
         if (this.handle.x < lastbreakyear) destroyHandle(this.handle);
         
-        var hiddenSpawnHandle = handles[currentRegion].find(h => h.type === 'hidden' && 
-            Math.abs(h.x - editemissions._fullLayout.xaxis.p2l(xspawn)) < 1);
+        var hiddenSpawnHandle = handles[currentRegion].find(h => h.type === 'hiddenspawn');
         if (hiddenSpawnHandle) {
             hiddenSpawnHandle.type = 'spawn';
         } else {
@@ -146,11 +145,11 @@ function sortHandles() {
     });
     var x = [], y = [], xvis = [], yvis = [];
     for (var i=0; i < len; i++) {
-        if (handles[currentRegion][i].type != 'spawn') {
+        if (handles[currentRegion][i].type != 'spawn' && handles[currentRegion][i].type != 'hiddenspawn') {
             x.push(handles[currentRegion][i].x);
             y.push(handles[currentRegion][i].y);
         }
-        if (handles[currentRegion][i].type != 'hidden') {
+        if (handles[currentRegion][i].type != 'hidden' && handles[currentRegion][i].type != 'hiddenspawn') {
             xvis.push(handles[currentRegion][i].x);
             yvis.push(handles[currentRegion][i].y);
         }
@@ -184,7 +183,7 @@ function updateEditEmissionsFromHandles() {
 function updatePointHandles() {
     var points = editemissions.querySelector(".scatterlayer .trace:nth-of-type(3) g").getElementsByTagName("path");
     for (var i=0, p=0, len=handles[currentRegion].length; i<len; i++) {
-        if (handles[currentRegion][i].type != 'hidden') {
+        if (handles[currentRegion][i].type != 'hidden' && handles[currentRegion][i].type != 'hiddenspawn') {
             points[p++].handle = handles[currentRegion][i];
         }
     }
