@@ -6,17 +6,28 @@ GCPfiledata = Dict(
     2018 => Dict("globalversion" => "v1.0", "landuserange" => "C21:C79", "nationalversion" => "v1.0",
                     "sheet" => "Territorial Emissions", "range" => "A17:HV76"),
     2019 => Dict("globalversion" => "v1.0", "landuserange" => "D20:D79", "nationalversion" => "v1.0",
-                    "sheet" => "Territorial Emissions", "range" => "A17:HW77")
+                    "sheet" => "Territorial Emissions", "range" => "A17:HW77"),
+    2020 => Dict("globalversion" => "v1.0", "landuserange" => "C22:C82", "nationalversion" => "v1.0",
+                    "sheet" => "Territorial Emissions", "range" => "A12:HZ73"),
+    2021 => Dict("globalversion" => "v1.0", "landuserange" => "C22:C83", "nationalversion" => "v1.0",
+                    "sheet" => "Territorial Emissions", "range" => "A12:IB74"),
+    2022 => Dict("globalversion" => "v1.0", "landuserange" => "C22:C84", "nationalversion" => "v1.0",
+                    "sheet" => "Territorial Emissions", "range" => "A12:IB184"),
+    2023 => Dict("globalversion" => "v1.1", "landuserange" => "C23:C86", "nationalversion" => "v1.0",
+                    "sheet" => "Territorial Emissions", "range" => "A12:HW185"),
+    2024 => Dict("globalversion" => "_v1.0", "landuserange" => "C23:C87", "nationalversion" => "v1.0",
+                    "sheet" => "Territorial Emissions", "range" => "A12:HW186")
 )
 
 RCPregions = Dict(
     # There is already a column "Europe" but it includes Russia and others
-    "Europe_alt" => ["EU28", "Iceland", "Norway", "Switzerland", "Turkey", "Macedonia (Republic of)",
-                "Albania", "Bosnia and Herzegovina", "Serbia", "Montenegro"],
+    "Europe_alt" => ["EU28", "EU27", "Iceland", "Norway", "Switzerland", "Turkey", "Türkiye",
+                "Macedonia (Republic of)", "North Macedonia", "Albania", "Bosnia and Herzegovina",
+                "Czechia", "Serbia", "Montenegro"],
      # add Europe to OECD in code below
     "OECD" => ["Australia", "Canada", "Japan", "New Zealand", "USA"],
     "REF" => ["Armenia", "Azerbaijan", "Belarus", "Georgia", "Kazakhstan", "Kyrgyzstan", "Moldova",
-                "Russian Federation", "Tajikistan", "Turkmenistan", "Ukraine", "Uzbekistan"],
+                "Russian Federation", "Russia", "Tajikistan", "Turkmenistan", "Ukraine", "Uzbekistan"],
     "ASIA" => ["Afghanistan", "Bangladesh", "Bhutan", "Brunei Darussalam", "Cambodia", "China",
                 "Hong Kong", "Macao", "North Korea", "Fiji", "French Polynesia", "India", "Indonesia",
                 "Laos", "Malaysia", "Maldives", "Micronesia (Federated States of)", "Mongolia", "Myanmar",
@@ -32,7 +43,8 @@ RCPregions = Dict(
                 "Namibia", "Niger", "Nigeria", "Occupied Palestinian Territory", "Oman", "Qatar", "Rwanda",
                 "Réunion", "Saudi Arabia", "Senegal", "Sierra Leone", "Somalia", "South Africa",
                 "South Sudan", "Sudan", "Swaziland", "Syria", "Togo", "Tunisia", "Uganda",
-                "United Arab Emirates", "Tanzania", "Yemen", "Zambia", "Zimbabwe"],
+                "United Arab Emirates", "Tanzania", "Yemen", "Zambia", "Zimbabwe",
+                "State of Palestine", "Eswatini"],
     "LAM" => ["Argentina", "Aruba", "Bahamas", "Barbados", "Belize", "Bolivia", "Brazil", "Chile",
                 "Colombia", "Costa Rica", "Cuba", "Dominican Republic", "Ecuador", "El Salvador",
                 "French Guiana", "Grenada", "Guadeloupe", "Guatemala", "Guyana", "Haiti", "Honduras",
@@ -68,10 +80,12 @@ function importGlobalCarbonProject(year)
     # XLSX.readtable(nationalfile, filedata["sheet"], filedata["range"])  
 
     data = XLSX.readdata(nationalfile, filedata["sheet"], filedata["range"])
-    data = replace(data, "NaN" => 0) # zero OK because only tiny islands & countries are missing data
+    data = replace(data, "NaN" => 0, missing => 0) # zero OK because only tiny islands & countries are missing data
     # data = replace(data, "NaN" => missing)
     headers = Symbol.(["year"; data[1, 2:end]])
-    df = DataFrame(data[2:end,:], headers)
+    row1959 = findfirst(data[2:end, 1] .== 1959) + 1    # find the 1959 row, skip the first missing row and add 1 to compensate
+    df = DataFrame(data[row1959:end,:], headers)
+    display(df)
 
     landuse = XLSX.readdata(globalfile, "Global Carbon Budget", filedata["landuserange"])
 
@@ -81,7 +95,7 @@ function importGlobalCarbonProject(year)
     end
 
     for (reg, countries) in RCPregions
-        df[reg] = sum(df[c] for c in countries if Symbol(c) in headers)
+        df[!, reg] = sum(df[!, c] for c in countries if Symbol(c) in headers)
     end
     df.GLOBALFOSSIL = df.World
     df.OECD = df.OECD + df.Europe_alt
@@ -91,7 +105,7 @@ function importGlobalCarbonProject(year)
 
     select!(df, [:OECD, :REF, :Asia, :MAF, :LAM, :BUNKERS, :GLOBALFOSSIL, :LANDUSE])
     for col in names(df)
-        df[col] = round.(df[col], digits=6)
+        df[!, col] = round.(df[!, col], digits=6)
     end
 
     preamble = """
@@ -115,12 +129,12 @@ function importGlobalCarbonProject(year)
     var backgrounddatastart = 1959;
     """
 
-    filename = joinpath(@__DIR__, "UI_backgrounddata.js")
+    filename = joinpath(@__DIR__, "..", "ui", "emission_history.js")
     open(filename, "w") do file
         print(file, preamble)
         for name in names(df)
             name == :GLOBALFOSSIL && continue
-            println(file, "    $name: [", join(df[name], ", "), "],")
+            println(file, "    $name: [", join(df[!, name], ", "), "],")
         end
         print(file, footer)
     end
