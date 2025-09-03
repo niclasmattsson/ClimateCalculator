@@ -213,8 +213,8 @@ function init() {
         contain: true,*/
         draggable: false,
         initialIndex: '4',
-        selectedAttraction: 0.025,
-        friction: 0.2
+        // selectedAttraction: 0.025,
+        // friction: 0.2
         /* can use flickety as thumbnails for flickety: https://codepen.io/anon/pen/rGzXeq */
     });
 
