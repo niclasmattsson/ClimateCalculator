@@ -14,7 +14,7 @@ export const state = {
     lastYear: 2100,
     firstDisplayYear: 2000,
     years: range(2010, 2100),
-    historicYears: range(backgroundDataStart, LAST_HISTORIC_YEAR + 1),
+    historicYears: range(backgroundDataStart, LAST_HISTORIC_YEAR),
 
     // Scenario selection.
     currentSSP: "SSP2-Baseline",

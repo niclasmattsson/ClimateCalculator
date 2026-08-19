@@ -132,13 +132,13 @@ The end year is measured from the length of the emission series rather than take
 
 ---
 
-## 7. (C) The emission-history x-vector is one year too long
+## 7. (C) The emission-history x-vector is one year too long — FIXED
 
 `state.historicYears` is `range(backgroundDataStart, LAST_HISTORIC_YEAR + 1)` = 1959..2024
 (66 values), but the data ends in 2023 (65 values). Plotly ignores the dangling 2024
 x-value, so nothing is drawn wrong today, but the two arrays should line up.
 
-**Fix:** `range(backgroundDataStart, LAST_HISTORIC_YEAR)`.
+**Fixed**: `range(backgroundDataStart, LAST_HISTORIC_YEAR)`. The x and y vectors of the history curve are now both 65 long, 1959–2023.
 
 ---
 
