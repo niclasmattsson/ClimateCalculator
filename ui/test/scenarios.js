@@ -266,3 +266,27 @@ Object.assign(window.__scenarios, {
     window.__outBg = b.style.backgroundColor;
   }
 });
+
+// --- scenarios covering the bug fixes (see ../BUGS.md) ---
+Object.assign(window.__scenarios, {
+    // BUGS.md #1: the row added by a second model run must carry an emissions snapshot.
+    runModelTwiceThenActivateTopRow: async () => {
+        const run = document.querySelector('input[type=submit]');
+        run.click();
+        await new Promise(r => setTimeout(r, 600));
+        run.click();
+        await new Promise(r => setTimeout(r, 600));
+        const rows = document.getElementById('runlog').rows;
+        rows[0].cells[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    },
+
+    // BUGS.md #1: the same row must survive a full redraw.
+    runModelTwiceThenMoveYearSlider: async () => {
+        const run = document.querySelector('input[type=submit]');
+        run.click();
+        await new Promise(r => setTimeout(r, 600));
+        run.click();
+        await new Promise(r => setTimeout(r, 600));
+        document.getElementById('yearSelectionSlider').noUiSlider.set([1980, 2010, 2100]);
+    }
+});

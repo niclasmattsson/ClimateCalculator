@@ -9,7 +9,7 @@ Severity: **A** = crashes or corrupts state, **B** = wrong numbers shown, **C** 
 
 ---
 
-## 1. (A) Two model runs in a row leave a log row with no emissions attached
+## 1. (A) Two model runs in a row leave a log row with no emissions attached — FIXED
 
 Each row of the "Model runs" table carries the emission path that produced it, as
 `row.emissions`. `addRowToLog()` (js/runLog.js) copies the previous row's *HTML* into the
@@ -25,8 +25,11 @@ The new top row has no `emissions`. Now click that row.
 Anything that calls `refreshAllEmissionFigures()` — moving the year slider, or switching
 region — throws too.
 
-**Fix:** either call `logEmissions()` after `addRowToLog()` in `submitEmissions()`, or make
-`addRowToLog()` carry the snapshot over: `newrow.emissions = row.emissions`.
+**Fixed** by making `addRowToLog()` carry the snapshot over, rather than by calling
+`logEmissions()` in `submitEmissions()`. `addRowToLog()` duplicates a row; it should
+duplicate all of it, and that keeps the function correct for every caller instead of
+relying on each one to remember. The snapshot is cloned rather than shared so that two
+rows never alias the same object.
 
 ---
 

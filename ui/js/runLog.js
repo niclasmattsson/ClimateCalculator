@@ -75,6 +75,11 @@ export function addRowToLog() {
     const row = dom.runLog.rows[0];
     const newrow = dom.runLog.insertRow(0);
     newrow.innerHTML = row.innerHTML;
+    // The new row describes the same emission path as the one it was copied from, until
+    // logEmissions() replaces it. Most callers do call logEmissions() straight after, but
+    // submitEmissions() does not: a second model run only changes the climate sensitivity,
+    // so the emissions carry over unchanged.
+    newrow.emissions = cloneObject(row.emissions);
     newrow.cells[0].style = "color:" + colorFor(dom.runLog.rows.length - 1);
     newrow.onclick = toggleLogRow;
 }
