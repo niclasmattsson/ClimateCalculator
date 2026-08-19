@@ -86,15 +86,21 @@ working", the bug the *Fix* button exists to work around — is most likely caus
 `dragend` handler rebinding only `path:last-of-type` while the initial binding covers all
 `path` elements. I could not reproduce it with synthetic events, so I would not claim the
 rewrite fixes it, but owning the event handling makes the failure mode impossible by
-construction, and the *Fix* button could then go away.
+construction.
+
+**Update:** all ten entries in `BUGS.md` have since been addressed, including #10, whose
+`dragend` handler now rebinds every marker rather than only the last. The *Fix* button and
+its bug note have been removed. That does not change the case for Pointer Events — it is
+still the way off `Plotly.d3` — but it is no longer carrying a suspected bug fix with it.
 
 ---
 
 ## 3. Suggested order
 
-1. **Self-host the fonts.** Independent of everything else, removes the external call.
-2. **Fix the crashing bugs** (`BUGS.md` #1, #2, #3). Small, and worth doing while the
-   harness is fresh.
+1. ~~**Fix the bugs** in `BUGS.md`.~~ **Done** — ten commits, one per entry, each checked
+   with the harness. Seven scenarios used to crash; none do now. One design question is
+   left open under #9: whether the pinned 2025 breakpoint should be draggable at all.
+2. **Self-host the fonts.** Independent of everything else, removes the external call.
 3. **Replace the d3 drag with Pointer Events**, still on Plotly 1.39.4. Isolating this from
    the version bump is the whole point: if the drag breaks, you know why.
 4. **Move to Plotly 3.x**, which is then just the `Plotly.plot` → `newPlot`/`addTraces`
