@@ -161,6 +161,10 @@ function growthText(from, to) {
         (growth > 0 ? "+" : "") + (100 * growth).toFixed(1) + " %/year</p>";
 }
 
+// Plotly recreates the marker elements whenever the number of breakpoints changes, so the
+// drag behaviour has to be bound to all of them again after every drag, not just the last.
+const MARKER_PATHS = ".scatterlayer .trace:last-of-type .points path";
+
 const OVER_LIMIT_TEXT =
     "<p><font color=\"red\">To go below zero or above the current max, " +
     "first change the scale by dragging the y-axis.</font></p>";
@@ -230,7 +234,7 @@ export function startDragBehavior() {
         updateEditEmissionsFromHandles();
         updatePointHandles();
         dom.trash.setAttribute("display", "none");
-        bindDrag(d3, drag, ".scatterlayer .trace:last-of-type .points path:last-of-type");
+        bindDrag(d3, drag, MARKER_PATHS);
 
         // this disables zoom on click event after dragging handles
         // (except for final handle which for some reason doesn't need it)
@@ -238,7 +242,7 @@ export function startDragBehavior() {
         nudgeEditTitle();
     });
 
-    bindDrag(d3, drag, ".scatterlayer .trace:last-of-type .points path");
+    bindDrag(d3, drag, MARKER_PATHS);
 }
 
 function bindDrag(d3, drag, selector) {

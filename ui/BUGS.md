@@ -174,7 +174,7 @@ pinning should not re-apply. Left alone pending your call.
 
 ---
 
-## 10. (?) Dragging breakpoints sometimes stops working — root cause not confirmed
+## 10. (?) Dragging breakpoints sometimes stops working — MITIGATED, cause still unconfirmed
 
 This is the bug the interface itself warns about, with the *Fix* button as a workaround.
 
@@ -193,5 +193,15 @@ them. That matches the reported symptom exactly.
 
 I could **not** reproduce it with synthetic mouse events: across repeated drags, spawns
 and deletions the elements were reused and all bindings survived. So treat this as a
-strong hypothesis, not a diagnosis. Dropping `:last-of-type` is harmless either way, since
-`.call(drag)` on an already-bound element just re-binds it.
+strong hypothesis, not a diagnosis.
+
+**Changed anyway:** the `dragend` handler now rebinds all markers, using the same selector
+as the initial binding. Re-binding an element that is already bound is a no-op in d3, so
+this cannot make anything worse, and it makes the "some handles lost their binding" failure
+mode impossible by construction. The harness shows no behavioural difference across the
+drag, spawn and delete scenarios.
+
+The *Fix* button and the bug note in the interface were removed on the strength of that. If
+the symptom ever comes back, the button was only `startDragBehavior()` and is trivial to
+restore — but the report should then be treated as a fresh investigation, because this
+explanation will have been ruled out.
