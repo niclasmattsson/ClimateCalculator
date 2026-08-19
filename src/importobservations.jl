@@ -83,7 +83,7 @@ function writebaseyearemissions()
         println(f, "// concentrations, so they include no inventory of their own.")
         println(f, "export const BASE_YEAR_EMISSIONS = {")
         for gas in ["FossilCO2", "OtherCO2", "CH4", "N2O"]
-            println(f, @sprintf("    %s: %.4g,", gas, emissions[gas]))
+            println(f, @sprintf("    %s: %.6g,", gas, emissions[gas]))
         end
         println(f, "};")
     end

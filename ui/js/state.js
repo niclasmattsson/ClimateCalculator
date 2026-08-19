@@ -2,7 +2,7 @@
 // `var`s on `window`; collecting them here makes every read and write greppable.
 
 import { range } from "./utils.js";
-import { ALL_REGIONS, LAST_HISTORIC_YEAR } from "./settings.js";
+import { ALL_REGIONS, BASE_YEAR, LAST_HISTORIC_YEAR } from "./settings.js";
 import { backgroundDataStart } from "./data/emissionHistory.js";
 
 const perRegion = (makeValue) => Object.fromEntries(ALL_REGIONS.map((r) => [r, makeValue()]));
@@ -10,10 +10,10 @@ const emptyGasSeries = () => ({ FossilCO2: [], OtherCO2: [], CH4: [], N2O: [], P
 
 export const state = {
     // Year range, driven by the year-selection slider in the settings panel.
-    firstYear: 2010,
+    firstYear: BASE_YEAR,
     lastYear: 2100,
     firstDisplayYear: 2000,
-    years: range(2010, 2100),
+    years: range(BASE_YEAR, 2100),
     historicYears: range(backgroundDataStart, LAST_HISTORIC_YEAR),
 
     // Scenario selection.

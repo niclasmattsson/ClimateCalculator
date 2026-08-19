@@ -3,6 +3,8 @@
 
 import { SSPscenarios } from "./data/sspScenarios.js";
 import { CO2emissionHistory } from "./data/emissionHistory.js";
+import { BASE_YEAR_EMISSIONS } from "./data/baseYearEmissions.js";
+import { BASE_YEAR, HARMONIZATION_END_YEAR } from "./settings.js";
 import { state } from "./state.js";
 import { range, cloneObject } from "./utils.js";
 
@@ -13,8 +15,28 @@ const SSP_ANNUAL_LENGTH = 96;   // 2005..2100
 
 /** Annual series for one region and gas under the currently selected model and scenario. */
 export function getSSP(region, gas, firstYear, lastYear) {
-    const decadal = SSPscenarios[gas][state.currentModel][state.currentSSP][region];
-    return interpolateSSP(decadal).slice(firstYear - 2005, lastYear - 2005 + 1);
+    const byRegion = SSPscenarios[gas][state.currentModel][state.currentSSP];
+    const annual = interpolateSSP(byRegion[region]);
+    harmonize(annual, gas, interpolateSSP(byRegion["Global"]));
+    return annual.slice(firstYear - 2005, lastYear - 2005 + 1);
+}
+
+/**
+ * Scale a scenario to meet the observed emissions in BASE_YEAR, the correction fading
+ * linearly to nothing by HARMONIZATION_END_YEAR. Without it, selecting a scenario makes the
+ * emission curve jump away from the observed history at the very year the two meet - the
+ * scenarios were built around 2005 and their land use CO2 is up to 50 % above what the
+ * Global Carbon Budget now reports. Every region gets the global ratio, so the regions
+ * still sum to the global series.
+ */
+function harmonize(annual, gas, global) {
+    const observed = BASE_YEAR_EMISSIONS[gas];
+    if (!HARMONIZATION_END_YEAR || observed === undefined) return;
+    const ratio = observed / global[BASE_YEAR - 2005];
+    for (let k = 0; k < annual.length; k++) {
+        const remaining = (HARMONIZATION_END_YEAR - (2005 + k)) / (HARMONIZATION_END_YEAR - BASE_YEAR);
+        annual[k] *= 1 + (ratio - 1) * Math.min(1, Math.max(0, remaining));
+    }
 }
 
 /** Linear interpolation of a decadal SSP vector onto every year from 2005 to 2100. */

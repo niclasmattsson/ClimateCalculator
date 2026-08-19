@@ -13,8 +13,7 @@ import { clamp } from "./utils.js";
 import { getSSP } from "./sspData.js";
 import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
 import {
-    FIRST_BREAKPOINT, SHOW_SSP_INSTEAD_OF_HISTORY, LAST_HISTORIC_YEAR,
-    DEFAULT_HANDLE_YEARS, SPAWN_POSITION
+    SHOW_SSP_INSTEAD_OF_HISTORY, LAST_HISTORIC_YEAR, DEFAULT_HANDLE_YEARS, SPAWN_POSITION
 } from "./settings.js";
 import { interpolateCubicHermite } from "./interpolation.js";
 
@@ -104,26 +103,12 @@ export function updateHandlesFromEmissions() {
 
     state.handles[state.currentRegion] = [];
     const emis = state.emissions[state.currentRegion]["FossilCO2"];
-    const { firstYear, firstDisplayYear, advancedMode } = state;
+    const { firstYear, firstDisplayYear } = state;
 
     addHandle("hidden", firstDisplayYear,
         CO2emissionHistory[state.currentRegion][firstDisplayYear - backgroundDataStart]);
     addHandle("hidden", firstYear, emis[0]);
-    handleyears.forEach((yr, index) => {
-        if (index === 0 && FIRST_BREAKPOINT) {
-            // Pin the first breakpoint to the observed recent emissions. Read the series at
-            // the breakpoint's own year, not at the year of the handle it replaces: those
-            // differ whenever the handles are built from DEFAULT_HANDLE_YEARS.
-            const at = FIRST_BREAKPOINT.year - firstYear;
-            // Basic mode shows the known global figure, scaled by the region's share of it.
-            // Advanced mode uses the regional series as it stands.
-            const scaled = FIRST_BREAKPOINT.emissions * emis[at] /
-                state.emissions["Global"]["FossilCO2"][at];
-            addHandle("normal", FIRST_BREAKPOINT.year, advancedMode ? emis[at] : scaled);
-        } else {
-            addHandle("normal", yr, emis[yr - firstYear]);
-        }
-    });
+    handleyears.forEach((yr) => addHandle("normal", yr, emis[yr - firstYear]));
     addHandle("final", 2100, emis[2100 - firstYear]);
     addHandle("spawn");
     state.lastBreakYear = firstYear;

@@ -2,7 +2,7 @@
 
 import { state, updateYears } from "./state.js";
 import { dom, figureOf, allFigures } from "./dom.js";
-import { ALL_REGIONS, REGION_COLORS, REGION_BUTTON_LAYOUTS } from "./settings.js";
+import { ALL_REGIONS, BASE_YEAR, REGION_COLORS, REGION_BUTTON_LAYOUTS } from "./settings.js";
 import { decimals } from "./utils.js";
 import { getSSP, completeExternalData } from "./sspData.js";
 import {
@@ -177,7 +177,7 @@ function createSliders() {
     });
 
     noUiSlider.create(dom.yearSelectionSlider, {
-        start: [2000, 2010, 2100],
+        start: [2000, BASE_YEAR, 2100],
         connect: [false, false, true, false],
         tooltips: [true, true, true],
         step: 10,
