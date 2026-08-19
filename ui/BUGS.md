@@ -152,7 +152,7 @@ is off by a factor of 10^9.
 
 ---
 
-## 9. (C) The pinned 2025 breakpoint takes its value from 2020
+## 9. (C) The pinned 2025 breakpoint takes its value from 2020 — FIXED
 
 In `updateHandlesFromEmissions()` (js/handles.js) the first breakpoint is placed at
 `FIRST_BREAKPOINT.year` (2025) but its y-value is read at `handleyears[0]`, which is 2020
@@ -162,8 +162,15 @@ For Global in basic mode this is harmless — the ratio `emis[i] / globalEmis[i]
 the value is forced to 38 regardless. It does bite in advanced mode, where the branch uses
 `emis[yr - firstYear]` directly and so puts the region's **2020** emissions at **2025**.
 
-Worth deciding separately: because this runs on every rebuild, dragging the 2025
-breakpoint and then changing the base scenario silently snaps it back to 38 Gton.
+**Fixed** by reading the series at `FIRST_BREAKPOINT.year`. Global in basic mode is
+unaffected, as expected — the ratio is 1 and the value is 38 either way. Switching to a
+region moves the breakpoint: Non-OECD now starts at 16.6 rather than 14.9 GtCO2.
+
+**Still open, and a design decision rather than a defect:** because this runs on every
+rebuild, dragging the first breakpoint and then changing the base scenario snaps it back to
+2025 and 38 Gton. If 2025 emissions are meant to be known and not editable, the handle
+should probably be `hidden` rather than draggable; if they are meant to be editable, the
+pinning should not re-apply. Left alone pending your call.
 
 ---
 
