@@ -29,6 +29,7 @@ window.__fp = function () {
   return {
     figs,
     runlog: document.getElementById('runlog').innerHTML.replace(/\s+/g, ' ').trim(),
+    cumulativeHeader: (document.getElementById('cumulativeheader') || {}).innerHTML || null,
     runlogRowClasses: [...document.getElementById('runlog').rows].map(r => r.className),
     emissionstext: document.getElementById('emissionstext').innerHTML.replace(/\s+/g, ' ').trim(),
     regionbuttons: [...document.getElementById('regionbuttons').getElementsByTagName('button')]

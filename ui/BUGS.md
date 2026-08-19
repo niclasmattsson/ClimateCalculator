@@ -118,13 +118,17 @@ capita" without qualification, because the regional figure already used it, and 
 
 ---
 
-## 6. (B) The cumulative-emissions column does not cover the years in its header
+## 6. (B) The cumulative-emissions column does not cover the years in its header — FIXED
 
 The table header reads *"Cumulative CO2 emissions (2020-2100)"*, but `logEmissions()` sums
 over the whole model range, `state.firstYear` to `state.lastYear` — 2010–2100 by default,
 and whatever the year slider is set to otherwise.
 
-**Fix:** either sum from 2020 explicitly, or make the header reflect the actual range.
+**Fixed** by making the header state the range that is actually summed, rather than
+summing a fixed 2020–2100. Hard-coding 2020 would break as soon as the year slider is set
+past it, and the column would then quietly mean something different from its label again.
+The end year is measured from the length of the emission series rather than taken from
+`state.lastYear`, because the two can differ.
 
 ---
 

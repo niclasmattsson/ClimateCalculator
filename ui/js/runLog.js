@@ -70,6 +70,12 @@ export function logEmissions() {
         cumulativeEmissions += emis;
     }
 
+    // Name the years actually summed. The emission series can be shorter than the range
+    // the year slider asks for, so measure it rather than trusting state.lastYear.
+    const lastSummedYear = state.firstYear + global["FossilCO2"].length - 1;
+    dom.cumulativeHeader.innerHTML = "Cumulative<br>CO<sub>2</sub> emissions<br>(" +
+        state.firstYear + "-" + lastSummedYear + ")";
+
     const rows = dom.runLog.rows;
     const swatch = "<td style=\"color:" + colorFor(rows.length - 1) + "\"><span>&#9724;</span></td>";
     rows[0].emissions = cloneObject(state.emissions);

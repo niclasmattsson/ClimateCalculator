@@ -39,6 +39,7 @@ export const dom = {
 
     // Model-run log.
     runLog: byId("runlog"),
+    cumulativeHeader: byId("cumulativeheader"),
     clearHiddenButton: byId("clearhidden"),
     clearFiguresButton: byId("clearfigures"),
 
