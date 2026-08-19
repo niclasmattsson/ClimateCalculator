@@ -55,6 +55,7 @@ function importobservations(lastyear::Int=BASEYEAR+1)
     read1(s) = readyearcolumn(s[2], s[3], s[4], s[5])
     writeobservations("AnnualTemperatures.dat", temps, read1.(temps), lastyear)
     writeobservations("AnnualConcentrations.dat", concs, read1.(concs), lastyear)
+    println("Now restart Julia and run makecalibrationcache() and writebaseyearemissions().")
 end
 
 # The observed global anthropogenic emissions in the model's base year, which the web

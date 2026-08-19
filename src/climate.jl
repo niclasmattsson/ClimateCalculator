@@ -24,7 +24,10 @@ function getparams(annualemissions;  firstyear::Int=BASEYEAR, lastyear::Int=2100
 						oceantempfeedback::Float64=1.0, bioQ10factor::Float64=2.0, equilibriumCO2::Float64=278.0)
 
 	p = ClimateParams(timestep, lambda, 0.0, 0.0, 0.0, oceantempfeedback, bioQ10factor, equilibriumCO2)
-	if usecache && oceantempfeedback == 1.0 && bioQ10factor == 2.0 && equilibriumCO2 == 278.0
+	# the cached history was calculated with the default feedback parameters, so both the
+	# calibration and the cached state are wrong for any other value
+	usecache = usecache && oceantempfeedback == 1.0 && bioQ10factor == 2.0 && equilibriumCO2 == 278.0
+	if usecache
 		p.aerosolforcingfactor = interpolatespline(lambda, cached_coeff_forcing)
 		p.fertilization = interpolatespline(lambda, cached_coeff_fertilization)
 		p.tempbaseline = interpolatespline(lambda, cached_coeff_tempbaseline)

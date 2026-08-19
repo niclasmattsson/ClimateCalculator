@@ -169,11 +169,16 @@ the value is forced to 38 regardless. It does bite in advanced mode, where the b
 unaffected, as expected — the ratio is 1 and the value is 38 either way. Switching to a
 region moves the breakpoint: Non-OECD now starts at 16.6 rather than 14.9 GtCO2.
 
-**Still open, and a design decision rather than a defect:** because this runs on every
+~~**Still open, and a design decision rather than a defect:** because this runs on every
 rebuild, dragging the first breakpoint and then changing the base scenario snaps it back to
 2025 and 38 Gton. If 2025 emissions are meant to be known and not editable, the handle
 should probably be `hidden` rather than draggable; if they are meant to be editable, the
-pinning should not re-apply. Left alone pending your call.
+pinning should not re-apply. Left alone pending your call.~~
+
+**Resolved by the 2023 rebaseline.** `FIRST_BREAKPOINT` existed to drag a 2010-based curve
+back to a plausible present-day value. The pathway now starts in 2023 at the observed
+emissions, and the scenarios are harmonized to meet it there, so the pin has nothing left to
+do and is gone. Nothing snaps back.
 
 ---
 

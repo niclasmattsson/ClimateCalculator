@@ -219,11 +219,16 @@ function historicdata()
 
 	#histNonCO2forcing_1 = forcing_RCP[:CH4_RF] + forcing_RCP[:N2O_RF] + forcing_RCP[:CH4OXSTRATH2O_RF] + 0.5*forcing_RCP[:TROPOZ_RF]
 
+	# the provenance line each data file starts with, so a stale cache can be recognised
+	datavintage = join([first(readlines("$path/$f")) for f in
+			["AnnualTemperatures.dat", "AnnualConcentrations.dat", "GlobalCarbonBudget.dat"]], " ")
+
 	histTemp = observedtemperatures(temperatureAnomaly)
 	histConc = observedconcentrations(observedConc, conc_RCP)
 	histEmissions = observedemissions(carbonbudget, histConc)
 
-	return aerosolforcing, otherforcing, conc_RCP, forcing_conc_RCP, histTemp, histConc, histEmissions
+	return aerosolforcing, otherforcing, conc_RCP, forcing_conc_RCP, histTemp, histConc, histEmissions, datavintage
 end
 
-const aerosolforcing, otherforcing, conc_RCP, forcing_conc_RCP, histTemp, histConc, histEmissions = historicdata()
+const aerosolforcing, otherforcing, conc_RCP, forcing_conc_RCP, histTemp, histConc, histEmissions,
+		datavintage = historicdata()

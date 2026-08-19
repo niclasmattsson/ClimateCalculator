@@ -9,7 +9,7 @@ let
 	# Provenance of the cache: any change to these settings makes the stored history wrong,
 	# and there is no way to tell from the numbers themselves.
 	stamp() = "baseyear $BASEYEAR, cache $CACHEYEARS, calibration $CALIBRATIONYEARS, " *
-				"baseline $BASELINEYEARS, temperatures $TEMPSERIES"
+				"baseline $BASELINEYEARS, temperatures $TEMPSERIES, data: $datavintage"
 
 	global function makecalibrationcache()
 		lambdas = splineknots[1]:0.1:splineknots[end]

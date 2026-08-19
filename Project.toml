@@ -24,3 +24,9 @@ Dates = "1.11.0"
 HTTP = "1.10.17"
 Oxygen = "1.7.2"
 Printf = "1.11.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

@@ -59,6 +59,37 @@ ClimateCalculator you will be able to design pathways for methane and nitrous ox
 feature has not yet been enabled. (But you can currently select alternative pathways for
 non-CO<sub>2</sub> gases according to preset SSP scenarios using the dropdown menu "Base scenario".)
 
+## Data and calibration
+
+The model follows observations up to a base year (2023) and the emission pathway you design
+after it. Everything that pins it to that vintage is in `src/settings.jl`: the base year, the
+calibration window, the temperature baseline, and the grid of the precalculated history cache.
+
+Historical CO<sub>2</sub> emissions come from the Global Carbon Budget, and historical
+CH<sub>4</sub> and N<sub>2</sub>O emissions are derived by inverting the concentration boxes,
+so those two gases reproduce the observed concentration record exactly. The aerosol forcing
+factor and the CO<sub>2</sub> fertilization factor are fitted over 1960-2023 against observed
+temperature and CO<sub>2</sub> concentration, both expressed relative to 1850-1900.
+
+To move to a newer data vintage:
+
+```
+julia> importobservations()          # downloads GISTEMP, HadCRUT5, NOAAGlobalTemp and NOAA GML
+julia> importGlobalCarbonProject(2024)
+```
+
+then restart Julia (the data files are read at load time) and rebuild what depends on them:
+
+```
+julia> makecalibrationcache()        # about three minutes
+julia> writebaseyearemissions()      # the base-year values the web interface starts from
+```
+
+`makecalibrationcache()` stamps the cache with the settings and data vintage it was built
+from, and loading a cache that no longer matches prints a warning. `Pkg.test()` runs the
+acceptance checks: concentrations and warming at the base year, the carbon sinks against the
+Global Carbon Budget, TCRE against the AR6 range, and a stored-results regression.
+
 ## How the model works - simplified graphical representation
 ![Simplified graphical representation](https://github.com/niclasmattsson/ClimateCalculator/blob/master/CCCsimple.png)
 
