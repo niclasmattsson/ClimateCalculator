@@ -142,13 +142,13 @@ x-value, so nothing is drawn wrong today, but the two arrays should line up.
 
 ---
 
-## 8. (C) The per-capita y-axis is labelled "Gton CO2/person/year"
+## 8. (C) The per-capita y-axis is labelled "Gton CO2/person/year" — FIXED
 
 Emissions are in Gton CO2/year and population in billions of people, so the ratio is
 **tons** CO2 per person per year — which is what the plotted values (~4.7) are. The label
 is off by a factor of 10^9.
 
-**Fix:** relabel to `ton CO<sub>2</sub>/person/year`.
+**Fixed**: relabelled to `ton CO<sub>2</sub>/person/year`, on both the global and the regional per-capita figure.
 
 ---
 

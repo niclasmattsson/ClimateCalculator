@@ -108,8 +108,10 @@ export function plotRegionalEmissions(plothistory = false) {
     nudgeAllTitles();
 }
 
+// Emissions are in Gton CO2/year and population in billions of people, so the ratio is
+// tons of CO2 per person per year.
 const PER_CAPITA_AXIS = {
-    title: "Gton CO<sub>2</sub>/person/year",
+    title: "ton CO<sub>2</sub>/person/year",
     rangemode: "tozero",
     hoverformat: ".2f"
 };
