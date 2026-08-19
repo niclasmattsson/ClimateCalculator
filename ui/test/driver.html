@@ -1,0 +1,106 @@
+<!DOCTYPE html><meta charset="utf-8"><title>CCC compare driver</title>
+<style>body{font:13px monospace}iframe{width:1400px;height:900px;border:1px solid #ccc}</style>
+<div id="status">idle</div>
+<iframe id="frame"></iframe>
+<script>
+const SRC = ['fingerprint.js', 'scenarios.js', 'helpers.js'];
+let sources = null;
+
+async function loadSources() {
+  if (sources) return sources;
+  sources = {};
+  for (const s of SRC) sources[s] = await (await fetch('/fp/' + s)).text();
+  return sources;
+}
+
+function loadApp(root) {
+  return new Promise((resolve, reject) => {
+    const f = document.getElementById('frame');
+    f.onload = () => setTimeout(() => resolve(f.contentWindow), 500);
+    f.onerror = reject;
+    f.src = root + '/ClimateCalculator.html?cachebust=' + Math.random();
+  });
+}
+
+async function runOne(root, name) {
+  const src = await loadSources();
+  const w = await loadApp(root);
+  for (const s of SRC) w.eval(src[s]);
+  const errors = [];
+  w.onerror = (m) => errors.push(String(m));
+  try {
+    await w.__scenarios[name]();
+  } catch (e) {
+    errors.push('SCENARIO THREW: ' + (e && e.stack || e));
+  }
+  await new Promise(r => setTimeout(r, 350));
+  for (let i = 0; i < errors.length; i++) {
+    errors[i] = errors[i].replace(/\/(base|live)\//g, '/APP/').replace(/driver\.html:\d+:\d+/g, 'driver.html');
+  }
+  let fp;
+  try { fp = w.__fp(); } catch (e) { fp = { FP_THREW: String(e && e.stack || e) }; }
+  return { fp, errors };
+}
+
+window.runAll = async function (root) {
+  const w0 = await loadApp(root);
+  const src = await loadSources();
+  w0.eval(src['scenarios.js']);
+  const names = Object.keys(w0.__scenarios);
+  const out = {};
+  for (const n of names) {
+    document.getElementById('status').textContent = root + ' :: ' + n;
+    out[n] = await runOne(root, n);
+  }
+  document.getElementById('status').textContent = 'done ' + root;
+  return out;
+};
+
+window.consoleErrorsFor = async function (root) {
+  const w = await loadApp(root);
+  return 'loaded';
+};
+</script>
+<script>
+function deepDiff(a, b, path, out, limit) {
+  if (out.length >= limit) return out;
+  if (a === b) return out;
+  const ta = a === null ? 'null' : Array.isArray(a) ? 'array' : typeof a;
+  const tb = b === null ? 'null' : Array.isArray(b) ? 'array' : typeof b;
+  if (ta !== tb) { out.push(path + ': type ' + ta + ' -> ' + tb + ' | ' + JSON.stringify(a) + ' -> ' + JSON.stringify(b)); return out; }
+  if (ta === 'object' || ta === 'array') {
+    const keys = [...new Set([...Object.keys(a || {}), ...Object.keys(b || {})])];
+    for (const k of keys) deepDiff(a ? a[k] : undefined, b ? b[k] : undefined, path ? path + '.' + k : k, out, limit);
+    return out;
+  }
+  if (ta === 'number' && Math.abs(a - b) < 1e-9) return out;
+  out.push(path + ': ' + JSON.stringify(a) + ' -> ' + JSON.stringify(b));
+  return out;
+}
+
+window.compareAll = async function () {
+  const base = window.__baseResult, live = window.__liveResult;
+  const report = {};
+  for (const k of Object.keys(base)) {
+    const d = deepDiff(base[k], live[k], '', [], 40);
+    if (d.length) report[k] = d;
+  }
+  return { totalScenarios: Object.keys(base).length, differing: Object.keys(report).length, report };
+};
+</script>
+<script>
+window.runBoth = function () {
+  window.__cmpDone = false; window.__cmpErr = null; window.__cmpReport = null;
+  (async () => {
+    window.__baseResult = await runAll('/base');
+    window.__liveResult = await runAll('/live');
+    window.__cmpReport = await compareAll();
+    window.__cmpDone = true;
+  })().catch(e => { window.__cmpErr = String(e && e.stack || e); window.__cmpDone = 'err'; });
+  return 'started';
+};
+window.cmpStatus = function () {
+  return { done: window.__cmpDone, err: window.__cmpErr, status: document.getElementById('status').textContent,
+           report: window.__cmpDone === true ? window.__cmpReport : null };
+};
+</script>

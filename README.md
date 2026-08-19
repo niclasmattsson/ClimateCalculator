@@ -20,7 +20,7 @@ After the installation, hit backspace at the prompt to exit package mode.
 julia> using ClimateCalculator
 
 julia> startserver()
-Open http://localhost:8000/static/UI_layout.html in your web browser.
+Open http://localhost:8000/ClimateCalculator.html in your web browser.
 
 julia> 
 ```
