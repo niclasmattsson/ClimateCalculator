@@ -57,20 +57,22 @@ function changeScenario(menu) {
  * Redraw the region buttons and, if the selection changed, switch the figures over to
  * the newly selected region.
  *
- * NOTE: this is also the change handler of the region-count menu, which calls it with an
- * Event — i.e. truthy — so changing the region count keeps the current region index
- * rather than resetting it. See BUGS.md (#2).
+ * `keepSelection` is false only during start-up, where the selection resets to Global.
+ * Both a region button and the region-count menu keep the current selection.
  */
-function updateRegionButtons(clickedRegionButton) {
-    if (!clickedRegionButton) {
+function updateRegionButtons(keepSelection) {
+    if (!keepSelection) {
         state.currentRegionNumber = 0;
     }
     const layout = REGION_BUTTON_LAYOUTS[dom.numberOfRegionsMenu.selectedIndex];
+    // Lowering the region count shortens the layout, so the selected index may no longer
+    // exist. Fall back to the last region that does.
+    state.currentRegionNumber = Math.min(state.currentRegionNumber, layout.length - 1);
     dom.numberOfRegionsMenu.blur();
 
     dom.regionButtons.replaceChildren(...layout.map((name, i) => makeRegionButton(name, i)));
 
-    state.currentRegion = clickedRegionButton ? layout[state.currentRegionNumber] : "Global";
+    state.currentRegion = keepSelection ? layout[state.currentRegionNumber] : "Global";
     if (state.currentRegion !== state.lastRegion) {
         updateHandlesFromEmissions();
         refreshAllEmissionFigures();
@@ -279,7 +281,9 @@ function connectInputPanel() {
         });
     }
 
-    dom.numberOfRegionsMenu.addEventListener("change", updateRegionButtons);
+    // Changing the region count keeps the current region selection, clamped to the new
+    // layout; passing the handler directly would work by accident, via the truthy Event.
+    dom.numberOfRegionsMenu.addEventListener("change", () => updateRegionButtons(true));
 }
 
 function connectRunLog() {

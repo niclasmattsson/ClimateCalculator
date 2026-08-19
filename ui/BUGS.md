@@ -33,7 +33,7 @@ rows never alias the same object.
 
 ---
 
-## 2. (A) Reducing the number of regions crashes if a high-numbered region is selected
+## 2. (A) Reducing the number of regions crashes if a high-numbered region is selected — FIXED
 
 `updateRegionButtons(clickedRegionButton)` resets `state.currentRegionNumber` to 0 only
 when called with no argument. It is also registered directly as the `change` handler of
@@ -45,10 +45,15 @@ the region-count menu, so it receives an `Event` — truthy — and keeps the ol
 **Result:** the 2-region layout has no index 3, so `state.currentRegion` becomes
 `undefined` and the next `state.handles[undefined]` access throws.
 
-**Fix:** clamp the index when the layout shrinks, e.g.
-`state.currentRegionNumber = Math.min(state.currentRegionNumber, layout.length - 1)`,
-and register the menu handler as `() => updateRegionButtons(true)` so the intent is
-explicit rather than accidental.
+**Fixed** by clamping the index to the new layout, and by registering the menu handler as
+`() => updateRegionButtons(true)` so that the behaviour is chosen rather than inherited
+from a truthy `Event`. The parameter is now called `keepSelection`, which is what it
+actually means.
+
+Clamping keeps the existing "hold on to the selection" behaviour and changes only the case
+that used to crash: going 3 → 2 regions from ROW now lands on OECD, and 3 → 1 lands on
+Global. Resetting to Global on every count change was the alternative; clamping was chosen
+because it disturbs the non-crashing cases less.
 
 ---
 

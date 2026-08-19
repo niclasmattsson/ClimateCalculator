@@ -280,6 +280,15 @@ Object.assign(window.__scenarios, {
         rows[0].cells[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     },
 
+    // BUGS.md #2: shrinking the region count while a high-numbered region is selected.
+    regionsThreeThenOne: async () => {
+        document.getElementById('modetoggle').click();
+        const nr = document.getElementById('numberregions');
+        nr.selectedIndex = 2; fire(nr, 'change');
+        document.getElementById('regionbuttons').getElementsByTagName('button')[3].click();
+        nr.selectedIndex = 0; fire(nr, 'change');
+    },
+
     // BUGS.md #1: the same row must survive a full redraw.
     runModelTwiceThenMoveYearSlider: async () => {
         const run = document.querySelector('input[type=submit]');
