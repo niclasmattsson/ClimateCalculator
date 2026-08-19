@@ -97,7 +97,7 @@ configuration rather than only its range, so a regression here would be caught.
 
 ---
 
-## 5. (B) "CO2 emissions per capita" is computed two different ways
+## 5. (B) "CO2 emissions per capita" is computed two different ways — FIXED
 
 - `plotIntensity()` (js/figures.js) uses `(FossilCO2 + OtherCO2) / Population`, taking the
   population from the current scenario.
@@ -110,7 +110,11 @@ Because `updateFigures()` runs at the end of start-up, the global figure shows t
 fossil-only number, while the *regional* per-capita figure in advanced mode shows the
 fossil+other number — so the "Global" line there does not match the global figure.
 
-**Fix:** pick one definition and use it in both places.
+**Fixed** by keeping `plotIntensity()`'s definition — total CO2, and the population from
+the current scenario — and having `updateFigures()` call the same function instead of
+recomputing. Fossil-plus-other was chosen because the figure is titled "CO2 emissions per
+capita" without qualification, because the regional figure already used it, and because
+`logEmissions()` counts cumulative emissions the same way.
 
 ---
 

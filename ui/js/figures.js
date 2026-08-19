@@ -108,22 +108,28 @@ export function plotRegionalEmissions(plothistory = false) {
     nudgeAllTitles();
 }
 
-export function plotIntensity(plotglobalfigure) {
-    const perCapitaAxis = { title: "Gton CO<sub>2</sub>/person/year", rangemode: "tozero", hoverformat: ".2f" };
-    const intensity = {};
+const PER_CAPITA_AXIS = {
+    title: "Gton CO<sub>2</sub>/person/year",
+    rangemode: "tozero",
+    hoverformat: ".2f"
+};
 
-    const perCapita = (region) => {
-        const series = new Array(state.lastYear - state.firstYear + 1);
-        const emissions = state.emissions[region];
-        for (let i = 0; i < state.years.length; i++) {
-            series[i] = (emissions["FossilCO2"][i] + emissions["OtherCO2"][i]) / emissions["Population"][i];
-        }
-        return series;
-    };
+/** Total CO2 (fossil and other) per head, for one region. */
+export function perCapita(region) {
+    const series = new Array(state.lastYear - state.firstYear + 1);
+    const emissions = state.emissions[region];
+    for (let i = 0; i < state.years.length; i++) {
+        series[i] = (emissions["FossilCO2"][i] + emissions["OtherCO2"][i]) / emissions["Population"][i];
+    }
+    return series;
+}
+
+export function plotIntensity(plotglobalfigure) {
+    const intensity = {};
 
     if (state.advancedMode) {
         Plotly.purge(figureOf["regionalintensity"]);
-        const options = layoutFor("CO<sub>2</sub> emissions per capita:  Regional", perCapitaAxis,
+        const options = layoutFor("CO<sub>2</sub> emissions per capita:  Regional", PER_CAPITA_AXIS,
             { colorway: ["#555", "#C44", "#44C", "#4C4"] });
         for (const region of regionalPlotList()) {
             intensity[region] = perCapita(region);
@@ -134,7 +140,7 @@ export function plotIntensity(plotglobalfigure) {
     }
 
     if (plotglobalfigure) {
-        const options = layoutFor("CO<sub>2</sub> emissions per capita", perCapitaAxis);
+        const options = layoutFor("CO<sub>2</sub> emissions per capita", PER_CAPITA_AXIS);
         draw(figureOf["intensity"], { x: state.years, y: intensity["Global"], name: "" }, options);
     }
 }
@@ -302,14 +308,9 @@ export function updateFigures() {
         state.editExistingEmissions = true;
     }
 
-    // NOTE: unlike plotIntensity(), this uses fossil CO2 only and the SSP population
-    // rather than the current scenario's. See BUGS.md (#5).
-    const nyears = state.lastYear - state.firstYear + 1;
-    const intensity = new Array(nyears);
-    const population = getSSP("Global", "Population", state.firstYear, state.lastYear);
-    for (let i = 0; i < nyears; i++) {
-        intensity[i] = state.emissions["Global"]["FossilCO2"][i] / population[i];
-    }
-    Plotly.restyle(figureOf["intensity"], "y", [intensity], figureOf["intensity"].data.length - 1);
+    // Same definition plotIntensity() uses for the regional figure, so that the "Global"
+    // line there and this figure agree.
+    Plotly.restyle(figureOf["intensity"], "y", [perCapita("Global")],
+        figureOf["intensity"].data.length - 1);
     nudgeAllTitles();
 }
