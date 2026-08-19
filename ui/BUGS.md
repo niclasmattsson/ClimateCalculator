@@ -82,7 +82,7 @@ all of them to go, and an empty log is a state the rest of the code cannot repre
 
 ---
 
-## 4. (B) The year-selection slider drops most of the x-axis configuration
+## 4. (B) The year-selection slider drops most of the x-axis configuration — FIXED
 
 The slider's `set` handler replaces `baseLayout.xaxis` wholesale with an object holding
 only `range` and `tick0`, discarding `dtick`, `ticks`, `ticklen`, `tickcolor`,
@@ -92,8 +92,8 @@ only `range` and `tick0`, discarding `dtick`, `ticks`, `ticklen`, `tickcolor`,
 20-year tick spacing and the x-axis tick padding hack, and — because `fixedrange` is gone
 — the x-axis becomes zoomable/pannable, which the design deliberately disabled.
 
-**Fix:** merge instead of replace:
-`Object.assign(baseLayout.xaxis, { range: [...], tick0: ... })`.
+**Fixed** by merging instead of replacing. The harness now records the whole x-axis
+configuration rather than only its range, so a regression here would be caught.
 
 ---
 

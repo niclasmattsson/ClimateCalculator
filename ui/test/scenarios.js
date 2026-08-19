@@ -299,6 +299,13 @@ Object.assign(window.__scenarios, {
         nr.selectedIndex = 0; fire(nr, 'change');
     },
 
+    // BUGS.md #4: the year slider must not strip the rest of the x-axis configuration.
+    yearSelectionThenChangeScenario: async () => {
+        document.getElementById('yearSelectionSlider').noUiSlider.set([1980, 2010, 2100]);
+        const s = document.getElementsByClassName('scenario')[0];
+        s.selectedIndex = 0; fire(s, 'change');
+    },
+
     // BUGS.md #3: hiding every row and clearing, with no model run to plot the rest.
     hideAllThenClearHidden: async () => {
         const rows = document.getElementById('runlog').rows;

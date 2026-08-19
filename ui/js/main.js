@@ -236,13 +236,12 @@ function connectSettingsPanel() {
         state.firstYear = Number(values[1]);
         state.lastYear = Number(values[2]);
         updateYears();
-        // NOTE: this replaces the whole x-axis config rather than merging into it, so
-        // dtick, ticks, ticklen, tickcolor, fixedrange and hoverformat are dropped.
-        // See BUGS.md (#4).
-        baseLayout.xaxis = {
+        // Merge, so that dtick, ticks, ticklen, tickcolor, fixedrange and hoverformat
+        // from plotConfig.js survive a change of year range.
+        Object.assign(baseLayout.xaxis, {
             range: [Math.floor(state.firstDisplayYear / 20) * 20 - 1, 2101],
             tick0: Math.floor(state.firstDisplayYear / 20) * 20
-        };
+        });
         refreshAllEmissionFigures();
     });
 

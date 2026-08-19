@@ -19,6 +19,10 @@ window.__fp = function () {
       title: (f.layout && f.layout.title && (f.layout.title.text || f.layout.title)) || null,
       yaxis: f.layout && f.layout.yaxis ? [f.layout.yaxis.title && (f.layout.yaxis.title.text || f.layout.yaxis.title), f.layout.yaxis.range && f.layout.yaxis.range.map(v => +v.toFixed(4))] : null,
       xrange: f.layout && f.layout.xaxis && f.layout.xaxis.range ? f.layout.xaxis.range.map(v => +v.toFixed(4)) : null,
+      // The whole x-axis config, not just the range: the year slider used to replace it
+      // wholesale and silently drop dtick, fixedrange and the tick padding (BUGS.md #4).
+      xaxis: f.layout && f.layout.xaxis ? ['dtick', 'tick0', 'ticks', 'ticklen', 'tickcolor', 'fixedrange', 'hoverformat']
+        .reduce((o, k) => (o[k] = f.layout.xaxis[k], o), {}) : null,
       traces: f.data.map(t => ({ x: h(t.x), y: h(t.y), ys: num(t.y), xs: num(t.x), op: t.opacity, vis: t.visible, mode: t.mode }))
     };
   });
