@@ -169,10 +169,7 @@ const OVER_LIMIT_TEXT =
     "<p><font color=\"red\">To go below zero or above the current max, " +
     "first change the scale by dragging the y-axis.</font></p>";
 
-/**
- * Bind d3 drag behaviour to the breakpoint markers. Called again by the "Fix" button
- * because Plotly recreates the marker elements whenever the breakpoint count changes.
- */
+/** Bind d3 drag behaviour to the breakpoint markers. */
 export function startDragBehavior() {
     const d3 = Plotly.d3;
     const drag = d3.behavior.drag();

@@ -41,9 +41,7 @@ export const dom = {
     runLog: byId("runlog"),
     cumulativeHeader: byId("cumulativeheader"),
     clearHiddenButton: byId("clearhidden"),
-    clearFiguresButton: byId("clearfigures"),
-
-    fixDragButton: byId("fixdrag")
+    clearFiguresButton: byId("clearfigures")
 };
 
 const carouselFigures = dom.figureGroup.querySelectorAll("figure");

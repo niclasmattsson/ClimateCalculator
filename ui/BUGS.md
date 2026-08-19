@@ -7,6 +7,9 @@ source.
 
 Severity: **A** = crashes or corrupts state, **B** = wrong numbers shown, **C** = cosmetic.
 
+**All ten are now addressed** (see the per-entry notes), one commit each, each verified with
+the harness in `test/`. One design question is deliberately left open under #9.
+
 ---
 
 ## 1. (A) Two model runs in a row leave a log row with no emissions attached — FIXED

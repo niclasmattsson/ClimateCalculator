@@ -110,10 +110,6 @@ window.__scenarios = {
     fire(s, 'change');
   },
 
-  fixDrag: async () => {
-    document.getElementById('fixdrag').click();
-  },
-
   enlargeEmissionsFigure: async () => {
     window.__toggleEnlarge('open');
     await new Promise(r => setTimeout(r, 400));

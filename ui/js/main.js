@@ -367,8 +367,6 @@ function connectFigures() {
             carousel.next();
         }
     });
-
-    dom.fixDragButton.addEventListener("click", startDragBehavior);
 }
 
 // ---------------------------------------------------------------- start-up
