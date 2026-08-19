@@ -33,4 +33,25 @@ let
 		Concentration[:N2O] += timestep * dt_Concentration_N2O
 		@pack! s = Concentration
 	end
+
+	# The boxes above inverted: the annual emissions that reproduce an observed annual
+	# concentration series. Used to drive the historical CH4 and N2O record from observations
+	# instead of from an emission inventory (see REBASELINE-2023.md).
+	global function inverseemissions(gas, concentration)
+		len = length(concentration)
+		emissions = Vector{Float64}(undef, len)
+		for i = 1:len
+			conc = concentration[i]
+			dt_conc = (concentration[min(i+1,len)] - concentration[max(i-1,1)]) /
+						(min(i+1,len) - max(i-1,1))
+			emissions[i] = if gas == :CH4
+					Lifetime_CH4_by_OH = lifetime_CH4_2000 * (conc/conc_CH4_2000)^0.28
+					Lifetime_CH4 = 1 / (1/lifetime_CH4_strat + 1/lifetime_CH4_soil + 1/Lifetime_CH4_by_OH)
+					(dt_conc + conc/Lifetime_CH4) / ppb_per_MtCH4
+				else
+					(dt_conc + conc/lifetime_N2O) / ppb_per_MtN
+				end
+		end
+		return emissions
+	end
 end

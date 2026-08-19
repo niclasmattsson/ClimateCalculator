@@ -57,10 +57,24 @@ function getscenario(scen)
 	#emissions2010 = Dict(:CO2 => 9.8779, :CH4 => 622.34, :N2O => 18.76)
 	annualemissions = Dict{Symbol, Vector{Float64}}()
 	annualemissions[:CO2] = emissionsRCP[:FossilCO2] + emissionsRCP[:OtherCO2]
-	annualemissions[:CH4] = emissionsRCP[:CH4] .+ 270	# natural background emissions: 270 MtCH4
-	annualemissions[:N2O] = emissionsRCP[:N2O] .+ 10.7	# natural background emissions: 10.7 MtN (TAR p253)
+	annualemissions[:CH4] = emissionsRCP[:CH4] .+ NATURALCH4
+	annualemissions[:N2O] = emissionsRCP[:N2O] .+ NATURALN2O
+
+	# Observed history up to BASEYEAR replaces the RCP record. The older RCP emissions are
+	# faded into it over EMISSIONBLEND years, mainly because land-use CO2 estimates have been
+	# revised upwards since the RCPs were made (see REBASELINE-2023.md).
+	for g in GAS3
+		observed = histEmissions[g]
+		first = findfirst(!isnan, observed)
+		ratio = observed[first] / annualemissions[g][first]
+		for i = max(1, first-EMISSIONBLEND):first-1
+			annualemissions[g][i] *= 1 + (ratio-1) * (i - first + EMISSIONBLEND) / EMISSIONBLEND
+		end
+		annualemissions[g][first:iyear(BASEYEAR)] = observed[first:iyear(BASEYEAR)]
+	end
+
 	if scen[1:3] != "RCP"
-		for g in GAS3, y in 2010:YEARS[end]
+		for g in GAS3, y in BASEYEAR+1:YEARS[end]
 			annualemissions[g][iyear(y)] = annualemissions[g][iyear(y)-1] * 
 				if y <= breakyear1[scen,g]
 					1 + growth1[scen,g]

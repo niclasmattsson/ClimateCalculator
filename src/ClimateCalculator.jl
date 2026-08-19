@@ -3,11 +3,14 @@ module ClimateCalculator
 using Parameters, Optim
 
 export runscen, solveclimate, getscenario, calibrateforcing!, calibratefertilization!, printresults, iyear,
-		ClimateState, ClimateParams, annualresults, makecalibrationcache, startserver, importGlobalCarbonProject
+		ClimateState, ClimateParams, annualresults, makecalibrationcache, startserver, importGlobalCarbonProject,
+		importobservations, writebaseyearemissions
 
 const YEARS				= 1765:2500
 const GAS				= [:CO2, :CH4, :N2O, :H2O, :O3]
 const GAS3 				= [:CO2, :CH4, :N2O]
+
+include("settings.jl")
 
 const y0 = YEARS[1]
 
@@ -23,6 +26,7 @@ mutable struct ClimateParams
 	lambda					::Float64
 	aerosolforcingfactor	::Float64
 	fertilization			::Float64
+	tempbaseline			::Float64
 	oceantempfeedback		::Float64
 	bioQ10factor			::Float64
 	equilibriumCO2			::Float64
@@ -71,5 +75,6 @@ include("calibrate.jl")
 include("cachehistory.jl")
 include("webserver.jl")
 include("importGlobalCarbonProject.jl")
+include("importobservations.jl")
 
 end

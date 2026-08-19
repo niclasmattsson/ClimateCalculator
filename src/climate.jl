@@ -1,6 +1,6 @@
 function initclimate(p::ClimateParams, firstyear, usecache)
 	if usecache && firstyear > YEARS[1]
-		coeffs = cached_coeff_state[:,:,div(firstyear-1800, 10) + 1]
+		coeffs = cached_coeff_state[:,:,findfirst(isequal(firstyear), CACHEYEARS)]
 		s = ClimateState([interpolatespline(p.lambda, coeffs[i,:]) for i=1:75])
 	else
 		s = ClimateState()
@@ -13,20 +13,21 @@ function initclimate(p::ClimateParams, firstyear, usecache)
 end
 
 # firstyear & lastyear: years to start & end the model run (max 1765-2500)
-# usecache: whether to use the precalculated cache of results 1765-2010 to speed up run times
+# usecache: whether to use the precalculated cache of historical results to speed up run times
 # timestep [years]: time step for solving the climate differential equations
 # lambda [°C/(W/m^2)]: climate sensitivity, related to CS per doubling of CO2 by CS [°C/(2xCO2)] = 3.7 W/m^2 * lambda
 # oceantempfeedback: set to 0 to disable temperature feedback in ocean carbon uptake (default is 1)
 # bioQ10factor: set to 1 to disable temperature feedback in the terrestrial biosphere (default is 2)
 # equilibriumCO2 [ppm]: use 278 to start model in preindustrial times
-function getparams(annualemissions;  firstyear::Int=2010, lastyear::Int=2100, usecache::Bool=true,
+function getparams(annualemissions;  firstyear::Int=BASEYEAR, lastyear::Int=2100, usecache::Bool=true,
 						timestep::Float64=0.01, lambda::Float64=0.8, rcp::String="RCP45",
 						oceantempfeedback::Float64=1.0, bioQ10factor::Float64=2.0, equilibriumCO2::Float64=278.0)
 
-	p = ClimateParams(timestep, lambda, 0.0, 0.0, oceantempfeedback, bioQ10factor, equilibriumCO2)
+	p = ClimateParams(timestep, lambda, 0.0, 0.0, 0.0, oceantempfeedback, bioQ10factor, equilibriumCO2)
 	if usecache && oceantempfeedback == 1.0 && bioQ10factor == 2.0 && equilibriumCO2 == 278.0
 		p.aerosolforcingfactor = interpolatespline(lambda, cached_coeff_forcing)
 		p.fertilization = interpolatespline(lambda, cached_coeff_fertilization)
+		p.tempbaseline = interpolatespline(lambda, cached_coeff_tempbaseline)
 	else
 		calibrateforcing!(p, rcp)
 		calibratefertilization!(annualemissions, p, rcp)
@@ -37,7 +38,7 @@ end
 # scen: BAU, 3DEG, 2DEG, 1DEG, 15DEG, 2DEGB, 15DEGB, 1PCT, 1PCTD, 3GTC, 2C-3CS, 2C-45CS, 2C-15CS
 function runscen(scen::String;  kwargs...)
 	results, p, annualemissions, rcp = solveclimate(scen;  kwargs...)
-	printresults(2010:10:2100, results, p, annualemissions, rcp)
+	printresults(BASEYEAR:10:2100, results, p, annualemissions, rcp)
 end
 
 solveclimate(; kwargs...) = solveclimate("2DEG";  kwargs...)
@@ -56,11 +57,11 @@ function solveclimate(annualemissions;  kwargs...)
 end
 
 function solveclimate(annualemissions, p::ClimateParams,
-						firstyear::Int=2010, lastyear::Int=2100, usecache::Bool=true, rcp::String="RCP45")
+						firstyear::Int=BASEYEAR, lastyear::Int=2100, usecache::Bool=true, rcp::String="RCP45")
 	stabilitycheck(p.timestep)
 
 	firstyear = usecache ? firstyear : YEARS[1]
-	roundedyear = firstyear >= 1800 ?  min(2010, 10*floor(Int, firstyear/10)) :  1765
+	roundedyear = firstyear >= CACHEYEARS[1] ?  maximum(y for y in CACHEYEARS if y <= firstyear) :  YEARS[1]
 	s = initclimate(p, roundedyear, usecache)
 
 	results = Vector{ClimateState}(undef, iyear(lastyear))
@@ -114,7 +115,7 @@ function printresults(yearrange, res, p::ClimateParams, annualemissions, rcp::St
 		out_concentration[row,:] =
 			[res[i].Concentration[:CO2]  res[i].Concentration[:CH4]  res[i].Concentration[:N2O]]
 		out_temp_forcing[row,:] =
-			[res[i].Temp_global  res[i].TotalRadiativeForcing*p.lambda  res[i].Temp_land  res[i].TotalRadiativeForcing  RF_nonCO2  res[i].Temp_land./res[i].Temp[1]]
+			[res[i].Temp_global-p.tempbaseline  res[i].TotalRadiativeForcing*p.lambda  res[i].Temp_land  res[i].TotalRadiativeForcing  RF_nonCO2  res[i].Temp_land./res[i].Temp[1]]
 		out_temp_ocean[row,:] =
 			[res[i].Temp[1]  res[i].Temp[2]  res[i].Temp[5]  res[i].Temp[10]  res[i].Temp[maxlayers]]
 	end

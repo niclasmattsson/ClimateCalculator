@@ -1,4 +1,4 @@
-using XLSX, DataFrames
+using XLSX, DataFrames, Printf
 
 GCPfiledata = Dict(
     2017 => Dict("globalversion" => "v1.3", "landuserange" => "C21:C78", "nationalversion" => "v1.2",
@@ -16,7 +16,7 @@ GCPfiledata = Dict(
     2023 => Dict("globalversion" => "v1.1", "landuserange" => "C23:C86", "nationalversion" => "v1.0",
                     "sheet" => "Territorial Emissions", "range" => "A12:HW185"),
     2024 => Dict("globalversion" => "_v1.0", "landuserange" => "C23:C87", "nationalversion" => "v1.0",
-                    "sheet" => "Territorial Emissions", "range" => "A12:HW186")
+                    "sheet" => "Territorial Emissions", "range" => "A12:HW186", "sinkrange" => "E23:F87")
 )
 
 RCPregions = Dict(
@@ -102,6 +102,7 @@ function importGlobalCarbonProject(year)
     df.BUNKERS = df.GLOBALFOSSIL - (df.OECD + df.REF + df.ASIA + df.MAF + df.LAM)
     df.Asia = df.ASIA
     df.LANDUSE = vec(landuse) * 1000
+    years = Int.(df.year)
 
     select!(df, [:OECD, :REF, :Asia, :MAF, :LAM, :BUNKERS, :GLOBALFOSSIL, :LANDUSE])
     for col in names(df)
@@ -139,8 +140,32 @@ function importGlobalCarbonProject(year)
         print(file, footer)
     end
 
+    writecarbonbudget(year, globalfile, filedata, years, df)
+
     println("\nFile $filename written.\n")
     return df
+end
+
+# The global totals in the model's own units, read by historicdata.jl. Fossil emissions come
+# from the national file (the same aggregation the web interface draws), the rest from the
+# global overview file. The two sink columns are only used to validate the carbon cycle.
+function writecarbonbudget(year, globalfile, filedata, years, df)
+    !haskey(filedata, "sinkrange") && return
+    sinks = XLSX.readdata(globalfile, "Global Carbon Budget", filedata["sinkrange"])
+    filename = joinpath(@__DIR__, "..", "GlobalCarbonBudget.dat")
+    open(filename, "w") do file
+        println(file, "# The Global Carbon Budget $year. Unit [GtC/year].")
+        println(file, "# Source: https://www.globalcarbonproject.org/carbonbudget/")
+        println(file, "# Written by importGlobalCarbonProject($year). FOSSIL is the national file's world")
+        println(file, "# total, aggregated as in emission_history.js; the other columns are global file.")
+        println(file, rstrip(@sprintf("%-6s%-14s%-14s%-14s%-14s", "YEAR", "FOSSIL", "LANDUSE", "OCEANSINK", "LANDSINK")))
+        for (i, y) in enumerate(years)
+            println(file, rstrip(@sprintf("%-6d%-14.6f%-14.6f%-14.6f%-14.6f", y, df.GLOBALFOSSIL[i]/1000,
+                                            df.LANDUSE[i]/1000, sinks[i,1], sinks[i,2])))
+        end
+    end
+    println("
+File $filename written.")
 end
 
 # Helper function used to transition from the old file:

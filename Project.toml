@@ -1,10 +1,11 @@
 name = "ClimateCalculator"
 uuid = "b4817551-ad67-44af-adb9-66f813b1bb11"
-authors = ["Nick Nack <nicknack232323@gmail.com>"]
 version = "0.1.0"
+authors = ["Nick Nack <nicknack232323@gmail.com>"]
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
@@ -14,9 +15,12 @@ Mux = "a975b10e-0019-58db-a62f-e48ff68538c9"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Oxygen = "df9a0d86-3283-4920-82dc-4555fc0d1d8b"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [compat]
+Dates = "1.11.0"
 HTTP = "1.10.17"
 Oxygen = "1.7.2"
+Printf = "1.11.0"
