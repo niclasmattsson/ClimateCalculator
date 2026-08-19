@@ -10,6 +10,14 @@ import { plotRegionalEmissions } from "./figures.js";
 
 const colorFor = (index) => PLOTLY_COLORS[index % PLOTLY_COLORS.length];
 
+const EMPTY_LOG_ROW = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
+
+/** Put the log back to its start-up state: one placeholder row, awaiting logEmissions(). */
+export function resetLog() {
+    dom.runLog.innerHTML = EMPTY_LOG_ROW;
+    dom.runLog.rows[0].onclick = toggleLogRow;
+}
+
 /** Make `row` the active run: its emissions become the ones being edited. */
 export function activateRow(row) {
     for (const r of dom.runLog.rows) {

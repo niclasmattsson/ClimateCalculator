@@ -280,6 +280,16 @@ Object.assign(window.__scenarios, {
         rows[0].cells[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     },
 
+    // BUGS.md #1: the same row must survive a full redraw.
+    runModelTwiceThenMoveYearSlider: async () => {
+        const run = document.querySelector('input[type=submit]');
+        run.click();
+        await new Promise(r => setTimeout(r, 600));
+        run.click();
+        await new Promise(r => setTimeout(r, 600));
+        document.getElementById('yearSelectionSlider').noUiSlider.set([1980, 2010, 2100]);
+    },
+
     // BUGS.md #2: shrinking the region count while a high-numbered region is selected.
     regionsThreeThenOne: async () => {
         document.getElementById('modetoggle').click();
@@ -289,13 +299,19 @@ Object.assign(window.__scenarios, {
         nr.selectedIndex = 0; fire(nr, 'change');
     },
 
-    // BUGS.md #1: the same row must survive a full redraw.
-    runModelTwiceThenMoveYearSlider: async () => {
-        const run = document.querySelector('input[type=submit]');
-        run.click();
+    // BUGS.md #3: hiding every row and clearing, with no model run to plot the rest.
+    hideAllThenClearHidden: async () => {
+        const rows = document.getElementById('runlog').rows;
+        rows[0].firstChild.firstChild.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        document.getElementById('clearhidden').click();
+    },
+
+    // BUGS.md #3: the same after a model run, so every figure is plotted.
+    runModelHideAllThenClearHidden: async () => {
+        document.querySelector('input[type=submit]').click();
         await new Promise(r => setTimeout(r, 600));
-        run.click();
-        await new Promise(r => setTimeout(r, 600));
-        document.getElementById('yearSelectionSlider').noUiSlider.set([1980, 2010, 2100]);
-    }
+        const rows = document.getElementById('runlog').rows;
+        rows[0].firstChild.firstChild.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        document.getElementById('clearhidden').click();
+    },
 });

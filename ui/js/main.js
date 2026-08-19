@@ -18,7 +18,7 @@ import {
     plotPopulation, plotIntensity, autoScale, fixAutoscale, updateFigures,
     refreshAllEmissionFigures, nudgeAllTitles
 } from "./figures.js";
-import { logEmissions, addRowToLog, toggleLogRow, activateRow } from "./runLog.js";
+import { logEmissions, addRowToLog, toggleLogRow, activateRow, resetLog } from "./runLog.js";
 import { submitEmissions } from "./api.js";
 
 const GASES = ["FossilCO2", "OtherCO2", "CH4", "N2O", "Population"];
@@ -301,9 +301,8 @@ function connectRunLog() {
         plotPopulation();
         plotIntensity(true);
         state.editExistingEmissions = true;
-        dom.runLog.innerHTML = "<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>";
+        resetLog();
         logEmissions();
-        dom.runLog.rows[0].onclick = toggleLogRow;
         nudgeAllTitles();
     });
 
@@ -323,13 +322,26 @@ function connectRunLog() {
             }
         }
         for (const figure of allFigures()) {
-            if (figure === figureOf["CO2emissions"]) {
-                Plotly.deleteTraces(figureOf["CO2emissions"], deleteRows.map((r) => r + 1));
-            } else {
-                Plotly.deleteTraces(figure, deleteRows);
-            }
+            // The emissions figure carries the history curve as trace 0, so its run
+            // traces are offset by one. Figures that have not been plotted yet (the
+            // concentration and temperature ones, before the first model run) have no
+            // traces to delete.
+            const traceCount = figure.data ? figure.data.length : 0;
+            const offset = figure === figureOf["CO2emissions"] ? 1 : 0;
+            const indices = deleteRows.map((r) => r + offset).filter((i) => i < traceCount);
+            if (indices.length) Plotly.deleteTraces(figure, indices);
         }
-        activateRow(rows[0]);
+
+        if (rows.length === 0) {
+            // Every run was hidden, so the log is now empty. Leaving it that way breaks
+            // the next logEmissions(); start over with the current path as a single run.
+            resetLog();
+            state.editExistingEmissions = false;   // makes updateFigures() draw a fresh trace set
+            updateFigures();
+            logEmissions();
+        } else {
+            activateRow(rows[0]);
+        }
     });
 }
 

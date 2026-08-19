@@ -57,7 +57,7 @@ because it disturbs the non-crashing cases less.
 
 ---
 
-## 3. (A) "Clear hidden" crashes on figures that have not been plotted yet
+## 3. (A) "Clear hidden" crashes on figures that have not been plotted yet — FIXED
 
 The handler calls `Plotly.deleteTraces()` on every figure in the carousel. The
 concentration and temperature figures only exist after a model run.
@@ -70,8 +70,15 @@ its colour swatch, click *Clear hidden*.
 **Result:** the table is emptied, then `activateRow(rows[0])` throws on `undefined`. The
 log is now empty and the next `logEmissions()` will fail as well.
 
-**Fix:** skip figures without `figure.data`, and skip the final `activateRow()` when no
-rows remain (or refuse to delete the last row).
+**Fixed** by filtering the trace indices against each figure's actual trace count, which
+covers both an unplotted figure and one that has been emptied by an earlier clear, and by
+handling the empty-log case explicitly.
+
+When every run was hidden, the log now restarts rather than being left empty: the
+placeholder row comes back and the current emission path is redrawn as a single run. The
+alternative — refusing to delete the last row — was rejected because the user asked for
+all of them to go, and an empty log is a state the rest of the code cannot represent
+(`logEmissions()` writes to `rows[0]`).
 
 ---
 
