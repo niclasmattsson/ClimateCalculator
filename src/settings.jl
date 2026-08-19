@@ -1,6 +1,6 @@
 # Everything that pins the model to a particular vintage of observations. Changing a value
 # here changes what the model says, so the precalculated history cache stores these settings
-# and refuses to load if they no longer match (see cachehistory.jl).
+# and warns when the cache it loads was built with different ones (see cachehistory.jl).
 
 # Last year of prescribed history: before it the model follows observations, from it the
 # user's designed emission pathway takes over. Also the year the UI starts drawing at.
@@ -26,7 +26,7 @@ const CACHEYEARS = [1800:10:10*fld(BASEYEAR, 10); BASEYEAR]
 const CONSTANTSOLARRF = true
 
 # Splice year for the observed concentration record: NOAA GML global means from here on,
-# RCP historical concentrations (observation-based) before. NOAA CO2 starts 1979, CH4 1983,
+# RCP historical concentrations (observation-based) before. NOAA CO2 starts 1979, CH4 1984,
 # N2O 2001. SPLICEBLEND is the number of years over which the level difference between the
 # two records is faded out; it must end well before BASEYEAR.
 const CONCENTRATIONSPLICE = Dict(:CO2 => 1980, :CH4 => 1985, :N2O => 2002)
