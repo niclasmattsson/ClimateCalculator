@@ -17,7 +17,7 @@ baseline, the observation splice years, the blend lengths and the cache grid.
 | D3 calibration window | 1960-2023 | `CALIBRATIONYEARS` |
 | D4 temperature baseline | 1850-1900, data-derived | `BASELINEYEARS`, `TEMPSERIES` |
 | D5 cache grid | `[1800:10:2020; 2023]` | `CACHEYEARS` |
-| D6 SSP harmonization | multiplicative, fading to 1 by 2050 | `HARMONIZATION_END_YEAR` in `ui/js/settings.js` |
+| D6 SSP harmonization | multiplicative, anchored at the pathway's first year, fading to 1 by 2050, per region for fossil CO2 | `HARMONIZATION_END_YEAR` in `ui/js/settings.js` |
 | D7 `FIRST_BREAKPOINT` | removed | - |
 
 Data (D1-D4 of §3) is downloaded by `importobservations()` into `AnnualTemperatures.dat`
@@ -302,6 +302,30 @@ makes the emission curve jump away from the observed history at the base year �
 screen, since both are drawn. The standard treatment is a multiplicative offset at the base
 year decaying to 1 by ~2050. This is a modelling choice with a visible effect, so it deserves
 a deliberate decision rather than a default.
+
+Fossil CO2 is harmonized region by region rather than with the single global ratio. The global
+ratio leaves the regional split where the scenario put it, and in SSP2-Baseline that split is
+2.6 GtCO2 off in 2023: the OECD starts at 12.7 against an observed 10.1, Asia at 15.8 against
+18.3. Since the Global scenario is the sum of the three leaf regions (OECD, Asia, ROW) in the
+database, and the observed regions sum to the observed world total, per-region ratios keep the
+regions summing to the global series at every year - including the base year, where each one
+now starts exactly on its own observed record.
+
+The anchor is the first year of the designed pathway rather than the base year as such. They
+are the same year until the year slider moves the start of the pathway back, and a pathway
+starting in, say, 2015 has to leave the record without a step in 2015 - which is where the
+observations it is being drawn against sit on screen. Past the end of the record there is
+nothing to anchor on and the base year remains the anchor.
+
+Population is harmonized the same way, on the UN record in `observedHistory.js`: the
+projection the scenarios were built on has the world 2.8 % short of its actual 2023
+population, and the per capita figures divide by it. GDP has no observed record here and is
+left as the scenarios have it.
+
+The same invariant constrains the harmonization factor in `regionalEmissions.js`, which
+re-splits an edited global pathway over the regions: its pull toward an equal share of the
+world total is ramped in over the pathway, since at full strength in the first year it
+replaces the observed split with equal shares and undoes all of the above.
 
 **D7 — Retire `FIRST_BREAKPOINT`.**
 Its whole job is to drag the 2010-based curve back to a plausible present-day value. With a

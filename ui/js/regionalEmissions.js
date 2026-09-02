@@ -42,9 +42,18 @@ export function globalEmissionsFromRegional() {
 }
 
 /**
- * Distribute a modified parent-region series over its subregions. The harmonization
- * factor blends between giving every subregion an equal share of the *change* (0) and
- * an equal share of the *total* (1).
+ * Distribute a modified parent-region series over its subregions. The harmonization factor
+ * blends between giving every subregion an equal share of the *change* (0) and an equal
+ * share of the *total* (1).
+ *
+ * The blend is ramped in over the pathway rather than applied at full strength from its
+ * first year. An equal share of the total is a statement about where the world converges,
+ * not about where it starts: imposed in the first year it splits the observed emissions
+ * evenly between the regions there and then, which throws every regional curve off the
+ * history it is drawn against - dragging a global breakpoint moved the OECD from its
+ * observed 10.1 Gton CO2 in 2023 to 12.5, a third of the world total. Ramped, the split
+ * starts on the observed one whatever the factor says and reaches the full blend in the
+ * last year of the pathway.
  */
 export function regionalEmissionsFromGlobal(parentregion, subregions) {
     const emissions = state.emissions;
@@ -53,14 +62,16 @@ export function regionalEmissionsFromGlobal(parentregion, subregions) {
     const sourceemissions = getSSP(parentregion, "FossilCO2", firstYear, lastYear);
     const targetemissions = emissions[parentregion]["FossilCO2"];
     const numregions = subregions.length;
+    const span = Math.max(1, lastYear - firstYear);
 
     for (const subregion of subregions) {
         const regionalemissions = getSSP(subregion, "FossilCO2", firstYear, lastYear);
         for (let i = 0; i < len; i++) {
             const equalincrement = (targetemissions[i] - sourceemissions[i]) / numregions + regionalemissions[i];
             const harmonization = targetemissions[i] / numregions;
+            const factor = harmonizationFactor * i / span;
             emissions[subregion]["FossilCO2"][i] =
-                equalincrement * (1 - harmonizationFactor) + harmonization * harmonizationFactor;
+                equalincrement * (1 - factor) + harmonization * factor;
         }
     }
 

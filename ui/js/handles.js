@@ -10,10 +10,10 @@
 import { state } from "./state.js";
 import { dom } from "./dom.js";
 import { clamp } from "./utils.js";
-import { getSSP } from "./sspData.js";
+import { getSSP, observedFossilCO2 } from "./sspData.js";
 import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
 import {
-    SHOW_SSP_INSTEAD_OF_HISTORY, DEFAULT_HANDLE_YEARS, SPAWN_POSITION
+    SHOW_SSP_INSTEAD_OF_HISTORY, DEFAULT_HANDLE_YEARS, SPAWN_POSITION, LAST_HISTORIC_YEAR
 } from "./settings.js";
 import { interpolateCubicHermite } from "./interpolation.js";
 
@@ -111,7 +111,7 @@ export function updateHandlesFromEmissions() {
 
     addHandle("hidden", firstDisplayYear,
         CO2emissionHistory[state.currentRegion][firstDisplayYear - backgroundDataStart]);
-    addHandle("hidden", firstYear, emis[0]);
+    addHandle("hidden", firstYear, startOfPathway(emis));
     handleyears.forEach((yr) => addHandle("normal", yr, emis[yr - firstYear]));
     addHandle("final", lastYear, emis[lastYear - firstYear]);
     addHandle("spawn");
@@ -119,6 +119,16 @@ export function updateHandlesFromEmissions() {
 
     updateEditEmissionsFromHandles();
     updatePointHandles();
+}
+
+/**
+ * Where the designed pathway starts: the observed record, which getSSP() harmonizes the
+ * scenarios to in this same year, so the two agree and the breakpoint says so outright.
+ * Past the end of the record there is nothing to anchor on and the scenario is the start.
+ */
+function startOfPathway(emissions) {
+    if (SHOW_SSP_INSTEAD_OF_HISTORY || state.firstYear > LAST_HISTORIC_YEAR) return emissions[0];
+    return observedFossilCO2(state.currentRegion, state.firstYear);
 }
 
 /** Plotly redraws the title too high after a restyle; put it back. */

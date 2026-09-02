@@ -6,7 +6,9 @@ import { cloneObject, range } from "./utils.js";
 import { getSSP } from "./sspData.js";
 import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
 import { OBSERVED_HISTORY, OBSERVED_HISTORY_START } from "./data/observedHistory.js";
-import { SHOW_SSP_INSTEAD_OF_HISTORY, SPAWN_POSITION } from "./settings.js";
+import {
+    SHOW_SSP_INSTEAD_OF_HISTORY, SPAWN_POSITION, REGION_BUTTON_LAYOUTS, REGION_COLORS
+} from "./settings.js";
 import { updateEditEmissionsFromHandles } from "./handles.js";
 import {
     baseLayout, plotConfigOptions, PLOTLY_COLORS, HISTORY_COLORWAY, historyTrace, grayHistoryTrace
@@ -107,32 +109,54 @@ export function plotEmissions(plothistory = false) {
     }, options);
 }
 
-/** Which regions the regional figures show, per "number of regions" menu index. */
+/**
+ * Which regions the regional figures show and in what colour, per "number of regions" menu
+ * index. The colours are the region buttons' own, so that a line can be traced back to the
+ * button that selects it. Index 0 has no regional figures of its own; it borrows the
+ * two-region layout, as the figures are only drawn in advanced mode anyway.
+ */
 function regionalPlotList() {
-    return dom.numberOfRegionsMenu.selectedIndex === 2
-        ? ["Global", "Asia", "OECD", "ROW"]
-        : ["Global", "Non-OECD", "OECD"];
+    const layout = REGION_BUTTON_LAYOUTS[Math.max(1, dom.numberOfRegionsMenu.selectedIndex)];
+    return layout.map((region, i) => ({ region, color: REGION_COLORS.selected[i] }));
+}
+
+/**
+ * The observed history of one region, dotted and in the region's own colour, so that each
+ * line on the regional figure is visibly the continuation of its own record rather than of
+ * the world total. Same treatment as the gray history on the single-region figures, which
+ * have only one record to draw.
+ */
+function regionalHistoryTrace(region, color) {
+    return {
+        x: state.historicYears,
+        y: CO2emissionHistory[region].slice(0, state.historicYears.length),
+        cliponaxis: false,
+        mode: "lines",
+        line: { color, width: 1.5, dash: "dot" },
+        name: ""
+    };
 }
 
 export function plotRegionalEmissions(plothistory = false) {
     const options = layoutFor(
         "CO<sub>2</sub> emissions from fossil fuels:  Regional",
-        Object.assign(gtCO2(".1f"), { rangemode: "tozero" }),
-        { colorway: ["#000", "#555", "#C44", "#44C", "#4C4"] }
+        Object.assign(gtCO2(".1f"), { rangemode: "tozero" })
     );
     Plotly.purge(figureOf["regionalCO2emissions"]);
+    const regions = regionalPlotList();
 
+    // Histories first, so that the pathways are drawn over them where they meet.
     if (plothistory) {
-        historyTrace.x = state.historicYears;
-        historyTrace.y = CO2emissionHistory[state.currentRegion]
-            .slice(0, state.historicYears.length);
-        draw(figureOf["regionalCO2emissions"], historyTrace, options);
+        for (const { region, color } of regions) {
+            draw(figureOf["regionalCO2emissions"], regionalHistoryTrace(region, color), options);
+        }
     }
 
-    for (const region of regionalPlotList()) {
+    for (const { region, color } of regions) {
         draw(figureOf["regionalCO2emissions"], {
             x: state.years,
             y: state.emissions[region]["FossilCO2"],
+            line: { color },
             name: ""
         }, options);
     }
@@ -163,11 +187,11 @@ export function plotIntensity(plotglobalfigure, plothistory = false) {
 
     if (state.advancedMode) {
         Plotly.purge(figureOf["regionalintensity"]);
-        const options = layoutFor("CO<sub>2</sub> emissions per capita:  Regional", PER_CAPITA_AXIS,
-            { colorway: ["#555", "#C44", "#44C", "#4C4"] });
-        for (const region of regionalPlotList()) {
+        const options = layoutFor("CO<sub>2</sub> emissions per capita:  Regional", PER_CAPITA_AXIS);
+        for (const { region, color } of regionalPlotList()) {
             intensity[region] = perCapita(region);
-            draw(figureOf["regionalintensity"], { x: state.years, y: intensity[region], name: "" }, options);
+            draw(figureOf["regionalintensity"],
+                { x: state.years, y: intensity[region], line: { color }, name: "" }, options);
         }
     } else {
         intensity["Global"] = perCapita("Global");

@@ -2,9 +2,10 @@
 // the generated data files do not contain.
 
 import { SSPscenarios } from "./data/sspScenarios.js";
-import { CO2emissionHistory } from "./data/emissionHistory.js";
+import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
 import { BASE_YEAR_EMISSIONS } from "./data/baseYearEmissions.js";
-import { BASE_YEAR, HARMONIZATION_END_YEAR } from "./settings.js";
+import { OBSERVED_HISTORY, OBSERVED_HISTORY_START } from "./data/observedHistory.js";
+import { HARMONIZATION_END_YEAR, LAST_HISTORIC_YEAR } from "./settings.js";
 import { state } from "./state.js";
 import { range, cloneObject } from "./utils.js";
 
@@ -16,27 +17,94 @@ const SSP_ANNUAL_LENGTH = 96;   // 2005..2100
 /** Annual series for one region and gas under the currently selected model and scenario. */
 export function getSSP(region, gas, firstYear, lastYear) {
     const byRegion = SSPscenarios[gas][state.currentModel][state.currentSSP];
-    const annual = interpolateSSP(byRegion[region]);
-    harmonize(annual, gas, interpolateSSP(byRegion["Global"]));
+    const annual = gas === "FossilCO2" && FOSSIL_LEAF_REGIONS[region]
+        ? harmonizedFossilCO2(byRegion, region)
+        : harmonizedOtherGas(byRegion, region, gas);
     return annual.slice(firstYear - 2005, lastYear - 2005 + 1);
 }
 
 /**
- * Scale a scenario to meet the observed emissions in BASE_YEAR, the correction fading
+ * The year the scenarios are pinned to the observations. Normally the base year, where the
+ * observed record ends and the designed pathway takes over. A pathway started earlier is
+ * pinned where it actually starts instead, since that is the year the two meet on screen and
+ * the year the curve has to leave the record without a step.
+ */
+function anchorYear() {
+    return Math.min(state.firstYear, LAST_HISTORIC_YEAR);
+}
+
+/**
+ * Scale a scenario to meet the observations in the anchor year, the correction fading
  * linearly to nothing by HARMONIZATION_END_YEAR. Without it, selecting a scenario makes the
  * emission curve jump away from the observed history at the very year the two meet - the
  * scenarios were built around 2005 and their land use CO2 is up to 50 % above what the
- * Global Carbon Budget now reports. Every region gets the global ratio, so the regions
- * still sum to the global series.
+ * Global Carbon Budget now reports.
+ *
+ * `reference` is the anchor-year value that `observed` is compared against; it is the
+ * series' own value where the region has an observed record of its own, and the global one
+ * where the correction has to be borrowed from the world total.
  */
-function harmonize(annual, gas, global) {
-    const observed = BASE_YEAR_EMISSIONS[gas];
-    if (!HARMONIZATION_END_YEAR || observed === undefined) return;
-    const ratio = observed / global[BASE_YEAR - 2005];
+function harmonize(annual, observed, reference) {
+    if (!HARMONIZATION_END_YEAR || observed === undefined || !reference) return annual;
+    const anchor = anchorYear();
+    const ratio = observed / reference;
     for (let k = 0; k < annual.length; k++) {
-        const remaining = (HARMONIZATION_END_YEAR - (2005 + k)) / (HARMONIZATION_END_YEAR - BASE_YEAR);
+        const remaining = (HARMONIZATION_END_YEAR - (2005 + k)) / (HARMONIZATION_END_YEAR - anchor);
         annual[k] *= 1 + (ratio - 1) * Math.min(1, Math.max(0, remaining));
     }
+    return annual;
+}
+
+/**
+ * The observed world total of one series in the anchor year, in the units the interface
+ * works in: from the annual record where there is one, and from the base year alone for
+ * fossil CO2, which observedHistory.js leaves out because the interface already has it by
+ * region. Population is harmonized like the gases, so that the per capita figures divide by
+ * the population the world actually has - the UN projection the scenarios were built on has
+ * it 2.8 % low by 2023. Anything with neither record, GDP being the only one, is returned
+ * undefined and left as the scenario has it.
+ */
+function observedGlobal(gas) {
+    const k = anchorYear() - OBSERVED_HISTORY_START;
+    const series = OBSERVED_HISTORY[gas];
+    return series && series[k] !== undefined ? series[k] : BASE_YEAR_EMISSIONS[gas];
+}
+
+/** Every gas but fossil CO2: the whole world's correction, so the regions still add up. */
+function harmonizedOtherGas(byRegion, region, gas) {
+    const global = interpolateSSP(byRegion["Global"]);
+    return harmonize(interpolateSSP(byRegion[region]),
+        observedGlobal(gas), global[anchorYear() - 2005]);
+}
+
+// What each region the interface offers sums, in terms of the three regions the observed
+// fossil CO2 record is kept for. A region outside this table - one of the raw SSP regions -
+// has no history of its own in GtCO2 and takes the global correction instead.
+const FOSSIL_LEAF_REGIONS = { Global: ["OECD", "Asia", "ROW"], "Non-OECD": ["Asia", "ROW"],
+    OECD: ["OECD"], Asia: ["Asia"], ROW: ["ROW"] };
+
+/**
+ * Fossil CO2 is harmonized region by region rather than globally. The scenarios put the
+ * 2023 split between the regions some way from where it turned out to be - SSP2 has the
+ * OECD 2.6 Gton CO2 above its observed 2023 emissions and Asia the same amount below - so a
+ * single global ratio leaves every regional curve starting off its own history. The regions
+ * still sum to the global series: the Global scenario is the sum of the three leaf regions
+ * in the database, and the observed regions sum to the observed world total, so the sums
+ * agree at every year including the anchor year.
+ */
+function harmonizedFossilCO2(byRegion, region) {
+    const anchor = anchorYear();
+    const parts = FOSSIL_LEAF_REGIONS[region].map((leaf) => {
+        const annual = interpolateSSP(byRegion[leaf]);
+        return harmonize(annual, observedFossilCO2(leaf, anchor), annual[anchor - 2005]);
+    });
+    if (parts.length === 1) return parts[0];
+    return parts[0].map((_, k) => parts.reduce((sum, part) => sum + part[k], 0));
+}
+
+/** A region's observed fossil CO2 emissions in one year, in GtCO2/year. */
+export function observedFossilCO2(region, year) {
+    return CO2emissionHistory[region][year - backgroundDataStart];
 }
 
 /** Linear interpolation of a decadal SSP vector onto every year from 2005 to 2100. */
