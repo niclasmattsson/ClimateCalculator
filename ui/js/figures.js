@@ -308,8 +308,10 @@ export function plotTemperature(temp) {
  * log's trace bookkeeping, which counts on one trace per run -- see isComponentFigure().
  *
  * Both are stacked areas rather than a bundle of lines: in each figure the components add
- * up to a total the model also reports, so a band's width is one part and the outline
- * drawn over the stack is the whole.
+ * up to a total the model also reports, so a band's width is one part and the line drawn
+ * over them is the whole. Where a component is negative -- a shrinking atmosphere, a sink
+ * that has turned into a source, the aerosols -- the stack splits at the axis and that line
+ * runs inside it instead of over it, at the two halves netted.
  */
 
 /** A `#rrggbb` colour with an alpha channel, for the fill under a band's outline. */
@@ -319,42 +321,94 @@ function translucent(hex, alpha) {
 }
 
 /**
- * Running totals of `seriesList`. A band drawn at the running total and filled down to the
- * band before it covers exactly its own component, which is how the stacks here are built:
- * this Plotly is 1.39 and predates the `stackgroup` attribute that does it natively.
+ * One half of a stack around zero: the `base` and outer `edge` of every band once the
+ * components of `seriesList` that have the given sign are piled up from the axis, in the
+ * order given. The years where a component has the other sign are `null` in both, so that
+ * its band is drawn only over the stretch that belongs to this half.
+ *
+ * A stretch reaches one year past each of its ends, where the band is given no width. The
+ * fill then tapers to nothing over that year instead of being cut off vertically at the
+ * last year it had a sign, which is what a component crossing the axis looked like: a wall
+ * dropped from the band to the axis in the year of the crossing. The extra year adds
+ * nothing to the running total, so the bands stacked on top of this one do not move.
+ *
+ * Splitting the stack at the axis is what keeps these figures readable once a component
+ * turns negative -- which the atmospheric growth does as soon as a pathway approaches net
+ * zero and the sinks start drawing down an atmosphere that no longer grows, and which the
+ * aerosol forcing is for the whole run. A single stack of running totals would drag every
+ * band above such a component down across the axis with it and draw them over it, so that
+ * the parts stopped looking as though they add up to anything.
  */
-function runningTotals(seriesList) {
-    let total = null;
+function signedStack(seriesList, positive) {
+    const running = (seriesList[0] || []).map(() => 0);
     return seriesList.map((series) => {
-        total = series.map((value, i) => value + (total ? total[i] : 0));
-        return total;
+        const belongshere = series.map((value) => (positive ? value > 0 : value < 0));
+        const base = [], edge = [];
+        series.forEach((value, i) => {
+            const drawn = belongshere[i] || belongshere[i - 1] || belongshere[i + 1];
+            base.push(drawn ? running[i] : null);
+            running[i] += belongshere[i] ? value : 0;
+            edge.push(drawn ? running[i] : null);
+        });
+        return { base, edge };
     });
 }
 
 /**
- * One filled band per entry of `components` ({ name, values, color }), stacked in the order
- * given, bottom first. Every band is drawn at a running total, so hovering one would report
- * the total rather than the component; `text` puts the component's own value back.
+ * One filled band per entry of `components` ({ name, values, color }), stacked around zero
+ * in the order given: in every year the components that are positive pile up from the axis
+ * and the ones that are negative hang down from it. A component that changes sign during
+ * the run is drawn in both halves, one stretch in each, and has its legend entry only once.
+ * The legend lists the bands from the top of the stack downwards.
+ *
+ * A band is a pair of traces, an invisible one along the edge it shares with the band
+ * before it and the filled, named one along its outer edge: the band below is no longer a
+ * band's base once the two are in different halves, so `tonexty` needs the base spelled
+ * out. (This Plotly is 1.39 and predates `stackgroup`, which would not do the split
+ * anyway.) An outer edge carries the running total rather than the component, so hovering
+ * would report the wrong number; `text` puts the component's own value back.
  */
 function stackedBands(x, components, { alpha = 0.8, showlegend = true, decimals = 1 } = {}) {
-    const totals = runningTotals(components.map((c) => c.values));
-    return components.map((component, i) => ({
-        x,
-        y: totals[i],
-        name: component.name,
-        legendgroup: component.name,
-        showlegend,
-        mode: "lines",
-        // The bottom band rests on the axis; the rest fill down to the band below.
-        fill: i === 0 ? "tozeroy" : "tonexty",
-        fillcolor: translucent(component.color, alpha),
-        line: { color: component.color, width: 1 },
-        hoverinfo: "x+text",
-        text: component.values.map((v) => component.name + ": " + v.toFixed(decimals))
-    }));
+    const traces = [];
+    const listed = new Set();
+    for (const positive of [true, false]) {
+        const stack = signedStack(components.map((c) => c.values), positive);
+        // Top band first, so that the legend reads down the stack the way the eye does.
+        // Only the legend cares: a band carries its own base rather than resting on the one
+        // before it, so the order the pairs are added in leaves the picture untouched.
+        for (let i = components.length - 1; i >= 0; i--) {
+            const component = components[i];
+            const { base, edge } = stack[i];
+            if (edge.every((y) => y === null)) continue;    // never has this sign
+            const named = showlegend && !listed.has(component.name);
+            listed.add(component.name);
+            traces.push({
+                x,
+                y: base,
+                legendgroup: component.name,
+                showlegend: false,
+                mode: "lines",
+                line: { width: 0 },
+                hoverinfo: "skip"
+            }, {
+                x,
+                y: edge,
+                name: component.name,
+                legendgroup: component.name,
+                showlegend: named,
+                mode: "lines",
+                fill: "tonexty",
+                fillcolor: translucent(component.color, alpha),
+                line: { color: component.color, width: 1 },
+                hoverinfo: "x+text",
+                text: component.values.map((v) => component.name + ": " + v.toFixed(decimals))
+            });
+        }
+    }
+    return traces;
 }
 
-/** The outline over a stack: the total its bands add up to. */
+/** The line over a stack: the total its bands net out to. */
 function totalTrace(name, x, y, color, decimals) {
     return {
         x,
@@ -394,7 +448,7 @@ const forcingLayout = () => componentLayout(
 // Where the emitted carbon ends up, in the order the bands are stacked, and the colour of
 // the total emissions that the three of them add up to.
 const SINK_BANDS = [
-    ["atmosphere", "Atmosphere", "#a6cee3"],   // light blue
+    ["atmosphere", "Atmospheric growth", "#a6cee3"],   // light blue
     ["ocean", "Ocean sink", "#1f78b4"],        // dark blue
     ["land", "Land sink", "#33a02c"]           // green
 ];
@@ -453,22 +507,19 @@ function carbonSinkTraces(sinks) {
 }
 
 /**
- * The forcing components stacked around zero: the warming terms up from the axis and the
- * cooling ones down from it, each in a stack of its own so that neither eats into the
- * other. Aerosols are the term that is negative in practice, but the split is read off the
- * run rather than assumed, since the residual "Other" term carries volcanoes among the rest.
+ * The forcing components, stacked around zero by stackedBands(): the warming terms up from
+ * the axis and the cooling ones down from it. Aerosols are the term that is negative in
+ * practice, but nothing here says so -- the sign is read off the run year by year, which
+ * the residual "Other" term needs since it carries the volcanoes among the rest.
  *
- * The total is not the top of the warming stack -- it is the two stacks netted -- so the
+ * The total is not the top of the warming stack -- it is the two halves netted -- so the
  * gap between the total line and that top is the size of the cooling stack below zero.
  */
 function forcingTraces(forcing) {
     const components = FORCING_COMPONENTS.map(([key, name, color]) =>
         ({ name, color, values: forcing[key] }));
-    const cools = (component) => component.values.reduce((a, b) => a + b, 0) < 0;
-    const options = { decimals: 2 };
     return [
-        ...stackedBands(state.years, components.filter((c) => !cools(c)), options),
-        ...stackedBands(state.years, components.filter(cools), options),
+        ...stackedBands(state.years, components, { decimals: 2 }),
         totalTrace("Total", state.years, forcing["Total"], "#000", 2)
     ];
 }
