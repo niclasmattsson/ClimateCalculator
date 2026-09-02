@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { dom, figureOf } from "./dom.js";
 import { cloneObject, range } from "./utils.js";
 import { getSSP } from "./sspData.js";
-import { CO2emissionHistory } from "./data/emissionHistory.js";
+import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
 import { OBSERVED_HISTORY, OBSERVED_HISTORY_START } from "./data/observedHistory.js";
 import { SHOW_SSP_INSTEAD_OF_HISTORY, SPAWN_POSITION } from "./settings.js";
 import { updateEditEmissionsFromHandles } from "./handles.js";
@@ -306,31 +306,80 @@ export function plotTemperature(temp) {
  * other carousel figure these show one run at a time: the newest after a model run, and
  * whichever row is clicked in the log afterwards. That also keeps them out of the run
  * log's trace bookkeeping, which counts on one trace per run -- see isComponentFigure().
+ *
+ * Both are stacked areas rather than a bundle of lines: in each figure the components add
+ * up to a total the model also reports, so a band's width is one part and the outline
+ * drawn over the stack is the whole.
  */
 
-/** One component curve. A dash marks the observed record apart from the model's own. */
-function componentTrace(name, x, y, color, dash) {
+/** A `#rrggbb` colour with an alpha channel, for the fill under a band's outline. */
+function translucent(hex, alpha) {
+    const rgb = parseInt(hex.slice(1), 16);
+    return "rgba(" + [rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255, alpha].join(",") + ")";
+}
+
+/**
+ * Running totals of `seriesList`. A band drawn at the running total and filled down to the
+ * band before it covers exactly its own component, which is how the stacks here are built:
+ * this Plotly is 1.39 and predates the `stackgroup` attribute that does it natively.
+ */
+function runningTotals(seriesList) {
+    let total = null;
+    return seriesList.map((series) => {
+        total = series.map((value, i) => value + (total ? total[i] : 0));
+        return total;
+    });
+}
+
+/**
+ * One filled band per entry of `components` ({ name, values, color }), stacked in the order
+ * given, bottom first. Every band is drawn at a running total, so hovering one would report
+ * the total rather than the component; `text` puts the component's own value back.
+ */
+function stackedBands(x, components, { alpha = 0.8, showlegend = true, decimals = 1 } = {}) {
+    const totals = runningTotals(components.map((c) => c.values));
+    return components.map((component, i) => ({
+        x,
+        y: totals[i],
+        name: component.name,
+        legendgroup: component.name,
+        showlegend,
+        mode: "lines",
+        // The bottom band rests on the axis; the rest fill down to the band below.
+        fill: i === 0 ? "tozeroy" : "tonexty",
+        fillcolor: translucent(component.color, alpha),
+        line: { color: component.color, width: 1 },
+        hoverinfo: "x+text",
+        text: component.values.map((v) => component.name + ": " + v.toFixed(decimals))
+    }));
+}
+
+/** The outline over a stack: the total its bands add up to. */
+function totalTrace(name, x, y, color, decimals) {
     return {
         x,
         y,
         name,
         mode: "lines",
-        cliponaxis: false,
-        line: { color, width: dash ? 1.5 : 2, dash: dash || "solid" }
+        line: { color, width: 3 },
+        hoverinfo: "x+text",
+        text: y.map((v) => name + ": " + v.toFixed(decimals))
     };
 }
 
-/** Shared layout for both component figures: a legend under the plot, and room for it. */
+/** Shared layout for both component figures: a legend inside the plot, in its free corner. */
 function componentLayout(title, yaxis) {
     return layoutFor(title, yaxis, {
         showlegend: true,
         legend: {
-            orientation: "h",
-            x: 0.5, xanchor: "center",
-            y: -0.15, yanchor: "top",
-            font: { size: 13 }
-        },
-        margin: { t: 50, r: 30, b: 100, l: 60, pad: 0 }
+            x: 0.02, xanchor: "left",
+            y: 0.98, yanchor: "top",
+            // Translucent, because which corner is free depends on the pathway drawn.
+            bgcolor: "rgba(255, 255, 255, 0.8)",
+            bordercolor: "#ddd",
+            borderwidth: 1,
+            font: { size: 12 }
+        }
     });
 }
 
@@ -342,54 +391,86 @@ const forcingLayout = () => componentLayout(
     "Radiative forcing",
     { title: "W/m<sup>2</sup>", rangemode: "tozero", hoverformat: ".2f" });
 
-// One colour per part of the carbon budget, shared by a modelled curve and its observed
-// counterpart. The three destinations add up to the total emissions.
-const SINK_COLORS = {
-    emissions: "#333",
-    atmosphere: "#d62728",
-    ocean: "#1f77b4",
-    land: "#2ca02c"
-};
+// Where the emitted carbon ends up, in the order the bands are stacked, and the colour of
+// the total emissions that the three of them add up to.
+const SINK_BANDS = [
+    ["atmosphere", "Atmosphere", "#a6cee3"],   // light blue
+    ["ocean", "Ocean sink", "#1f78b4"],        // dark blue
+    ["land", "Land sink", "#33a02c"]           // green
+];
+const TOTAL_EMISSIONS_COLOR = "#333";
 
-// Response key, legend label and colour of each forcing component, in legend order. The
-// keys are the ones radiativeforcingcomponents() in src/webserver.jl returns.
+// Response key, legend label and colour of each forcing component, warming terms first.
+// The keys are the ones radiativeforcingcomponents() in src/webserver.jl returns; the
+// colours are the customary ones for these gases, with the cooling aerosol term in blue.
 const FORCING_COMPONENTS = [
-    ["Total", "Total", "#000"],
     ["CO2", "CO<sub>2</sub>", "#d62728"],
     ["CH4", "CH<sub>4</sub>", "#ff7f0e"],
     ["N2O", "N<sub>2</sub>O", "#9467bd"],
     ["H2O", "H<sub>2</sub>O (strat.)", "#17becf"],
-    ["O3", "O<sub>3</sub> (trop.)", "#8c564b"],
-    ["Aerosols", "Aerosols", "#1f77b4"],
-    ["Other", "Other", "#7f7f7f"]
+    ["O3", "O<sub>3</sub> (trop.)", "#bcbd22"],
+    ["Other", "Other", "#7f7f7f"],
+    ["Aerosols", "Aerosols", "#1f77b4"]
 ];
 
-/** The observed record of one component, stopping where the designed pathway takes over. */
-function observedComponent(name, series, color) {
+/**
+ * The observed carbon budget over the years before the designed pathway starts, split the
+ * same three ways as the model's own. The Global Carbon Budget supplies the two sinks and
+ * both halves of the emissions; whatever the sinks leave behind is the atmospheric growth,
+ * exactly as carbonsinks() in src/webserver.jl reads it out of the model. The budget
+ * imbalance, up to a gigaton or so in a single year, therefore lands in the atmosphere band.
+ */
+function observedCarbonBudget() {
     const years = range(OBSERVED_HISTORY_START,
         Math.min(OBSERVED_HISTORY_END, state.firstYear));
-    return componentTrace(name, years, OBSERVED_HISTORY[series].slice(0, years.length),
-        color, "dot");
+    const cut = (series, start) => series.slice(start, start + years.length);
+    const fossil = cut(CO2emissionHistory["Global"], OBSERVED_HISTORY_START - backgroundDataStart);
+    const ocean = cut(OBSERVED_HISTORY["OceanSink"], 0);
+    const land = cut(OBSERVED_HISTORY["LandSink"], 0);
+    const emissions = cut(OBSERVED_HISTORY["OtherCO2"], 0).map((v, i) => v + fossil[i]);
+    return {
+        years,
+        emissions,
+        atmosphere: emissions.map((v, i) => v - ocean[i] - land[i]),
+        ocean,
+        land
+    };
 }
 
 function carbonSinkTraces(sinks) {
-    const modelled = (name, key) =>
-        componentTrace(name, state.years, sinks[key], SINK_COLORS[key]);
+    const observed = observedCarbonBudget();
+    const bands = (source, x, options) => stackedBands(x,
+        SINK_BANDS.map(([key, name, color]) => ({ name, color, values: source[key] })), options);
     return [
-        modelled("Total emissions", "emissions"),
-        modelled("Atmosphere", "atmosphere"),
-        modelled("Ocean sink", "ocean"),
-        modelled("Land sink", "land"),
-        // The Global Carbon Budget's own sink estimates, so that the model's carbon cycle
-        // can be read against the record it is calibrated on. Drawn last, i.e. on top.
-        observedComponent("Ocean (obs.)", "OceanSink", SINK_COLORS.ocean),
-        observedComponent("Land (obs.)", "LandSink", SINK_COLORS.land)
+        // The record the run continues, drawn paler so that it reads as observation rather
+        // than as model output, and without a second set of legend entries.
+        ...bands(observed, observed.years, { alpha: 0.4, showlegend: false }),
+        ...bands(sinks, state.years, {}),
+        totalTrace("Total CO<sub>2</sub> emissions",
+            observed.years.concat(state.years),
+            observed.emissions.concat(sinks.emissions), TOTAL_EMISSIONS_COLOR, 1)
     ];
 }
 
+/**
+ * The forcing components stacked around zero: the warming terms up from the axis and the
+ * cooling ones down from it, each in a stack of its own so that neither eats into the
+ * other. Aerosols are the term that is negative in practice, but the split is read off the
+ * run rather than assumed, since the residual "Other" term carries volcanoes among the rest.
+ *
+ * The total is not the top of the warming stack -- it is the two stacks netted -- so the
+ * gap between the total line and that top is the size of the cooling stack below zero.
+ */
 function forcingTraces(forcing) {
-    return FORCING_COMPONENTS.map(([key, label, color]) =>
-        componentTrace(label, state.years, forcing[key], color));
+    const components = FORCING_COMPONENTS.map(([key, name, color]) =>
+        ({ name, color, values: forcing[key] }));
+    const cools = (component) => component.values.reduce((a, b) => a + b, 0) < 0;
+    const options = { decimals: 2 };
+    return [
+        ...stackedBands(state.years, components.filter((c) => !cools(c)), options),
+        ...stackedBands(state.years, components.filter(cools), options),
+        totalTrace("Total", state.years, forcing["Total"], "#000", 2)
+    ];
 }
 
 /**
@@ -401,6 +482,8 @@ export function plotRunComponents(results) {
     const redraw = (name, traces, options) => {
         // react() rather than purge-and-plot: the trace list changes wholesale on every
         // run, and this keeps the figure's modebar and axes rather than rebuilding them.
+        // An empty figure has nothing to put in a legend, and Plotly would draw the box.
+        options.showlegend = traces.length > 0;
         Plotly.react(figureOf[name], traces, options, plotConfigOptions);
         nudgeTitle(figureOf[name]);
     };

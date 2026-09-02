@@ -99,12 +99,17 @@ the difference between a black box and a model you can look inside.
 **As built.** `readresults()` now also returns `carbonsinks` (total CO2 emissions split into
 atmosphere, ocean and land, all in GtCO2/year) and `forcing` (the five modelled gases plus
 aerosols, other and the total, in W/m2). Two carousel figures sit immediately to the right
-of the temperature figure, *Carbon sinks* and *Radiative forcing*, with the Global Carbon
-Budget's own ocean and land sink estimates drawn behind the first. Unlike every other figure
-these show one run at a time -- half a dozen component curves per run would be unreadable
-overlaid -- so they follow whichever row is active in the run log, and the log's trace
-bookkeeping skips them. The land vs. ocean warming split under `Temp_land` and `Temp[1..50]`
-was left alone.
+of the temperature figure, *Carbon sinks* and *Radiative forcing*. Both are stacked areas
+with the legend inside the plot: in each the components add up to a total the model also
+reports, so a band's width is one part and the line drawn over the stack is the whole.
+The sinks are light blue, dark blue and green (atmosphere, ocean, land) and the years before
+the pathway starts carry the observed carbon budget in the same three bands, paler; the
+forcing components are stacked around zero, warming terms up from the axis and the cooling
+aerosol term down from it, so the total line runs where the two stacks net out. Unlike every
+other figure these show one run at a time -- half a dozen component curves per run would be
+unreadable overlaid -- so they follow whichever row is active in the run log, and the log's
+trace bookkeeping skips them. The land vs. ocean warming split under `Temp_land` and
+`Temp[1..50]` was left alone.
 
 ### 1.3 Put observations on the temperature and concentration charts
 
