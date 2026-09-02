@@ -45,17 +45,35 @@ h1 {
 	fill: #F00;
 }
 
+/*	The panel holds fixed-size controls, so its width cannot follow the viewport all the
+	way down: below min-width the sliders would stick out through its right edge, and they
+	are invisible there because the body hides its horizontal overflow. Zooming the browser
+	in is what gets it there, since that shrinks the viewport in CSS pixels. The settings
+	are also taller than a short window, hence the scrolling. */
 #settingswindow {
 	position: absolute;
-	transition: 0.3s ease;
+	transition: transform 0.3s ease;
 	top: 5px;
-	right: -25%;
+	right: 5px;
 	height: 96%;
 	width: 25%;
+	min-width: 470px;
+	max-width: calc(100vw - 10px);
+	box-sizing: border-box;
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	/*	Parked by its own width rather than by a percentage of the viewport, so that it is
+		still off screen once min-width has made it wider than the 25% it asks for. */
+	transform: translateX(calc(100% + 15px));
 	z-index: 999;
 	background: white;
 	border-radius: 5px;
 	box-shadow: 3px 5px 20px rgba(0,0,0,.4);
+}
+
+#settingswindow.open {
+	transform: none;
 }
 
 .switch-light > span {
@@ -91,9 +109,16 @@ h1 {
 	margin: 25px 0 0 25px;
 }
 
+/*	The right margin clears the value tooltip of a handle parked at the end of the track,
+	which is drawn centred on it and so hangs past the end of the slider itself. */
 #settingswindow .slider {
-	width: 410px;
-	margin: 20px 0 70px 0;
+	width: auto;
+	max-width: 410px;
+	margin: 20px 35px 70px 0;
+}
+
+#settingswindow select {
+	max-width: calc(100% - 25px);
 }
 
 /*	disable accidental text selection around buttons & sliders

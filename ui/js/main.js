@@ -239,8 +239,11 @@ function createCarousel() {
 // ---------------------------------------------------------------- event wiring
 
 function connectSettingsPanel() {
-    dom.settingsOpen.addEventListener("click", () => { dom.settingsWindow.style.right = "5px"; });
-    dom.settingsClose.addEventListener("click", () => { dom.settingsWindow.style.right = "-25%"; });
+    // Open and closed are a class rather than an inline offset: the panel parks itself by
+    // its own width in the stylesheet, which a percentage of the viewport cannot do once
+    // its min-width has taken over.
+    dom.settingsOpen.addEventListener("click", () => dom.settingsWindow.classList.add("open"));
+    dom.settingsClose.addEventListener("click", () => dom.settingsWindow.classList.remove("open"));
 
     dom.modeToggle.addEventListener("click", () => setAdvancedMode(!state.advancedMode));
 
