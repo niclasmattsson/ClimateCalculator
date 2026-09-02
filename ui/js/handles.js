@@ -13,7 +13,7 @@ import { clamp } from "./utils.js";
 import { getSSP } from "./sspData.js";
 import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
 import {
-    SHOW_SSP_INSTEAD_OF_HISTORY, LAST_HISTORIC_YEAR, DEFAULT_HANDLE_YEARS, SPAWN_POSITION
+    SHOW_SSP_INSTEAD_OF_HISTORY, DEFAULT_HANDLE_YEARS, SPAWN_POSITION
 } from "./settings.js";
 import { interpolateCubicHermite } from "./interpolation.js";
 
@@ -72,7 +72,7 @@ export function updateEditEmissionsFromHandles() {
     const backgroundYears = SHOW_SSP_INSTEAD_OF_HISTORY ? state.years : state.historicYears;
     const backgroundEmissions = SHOW_SSP_INSTEAD_OF_HISTORY
         ? getSSP(state.currentRegion, "FossilCO2", state.firstYear, state.lastYear)
-        : CO2emissionHistory[state.currentRegion].slice(0, LAST_HISTORIC_YEAR + 1 - backgroundDataStart);
+        : CO2emissionHistory[state.currentRegion].slice(0, state.historicYears.length);
 
     Plotly.restyle(dom.editEmissions, {
         x: [state.years, backgroundYears, xvis],

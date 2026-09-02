@@ -4,9 +4,9 @@ import { state } from "./state.js";
 import { dom, figureOf } from "./dom.js";
 import { cloneObject, range } from "./utils.js";
 import { getSSP } from "./sspData.js";
-import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
+import { CO2emissionHistory } from "./data/emissionHistory.js";
 import { OBSERVED_HISTORY, OBSERVED_HISTORY_START } from "./data/observedHistory.js";
-import { SHOW_SSP_INSTEAD_OF_HISTORY, LAST_HISTORIC_YEAR, SPAWN_POSITION } from "./settings.js";
+import { SHOW_SSP_INSTEAD_OF_HISTORY, SPAWN_POSITION } from "./settings.js";
 import { updateEditEmissionsFromHandles } from "./handles.js";
 import {
     baseLayout, plotConfigOptions, PLOTLY_COLORS, HISTORY_COLORWAY, historyTrace, grayHistoryTrace
@@ -44,7 +44,7 @@ function backgroundSeries(region) {
     }
     return {
         x: state.historicYears,
-        y: CO2emissionHistory[region].slice(0, LAST_HISTORIC_YEAR + 1 - backgroundDataStart)
+        y: CO2emissionHistory[region].slice(0, state.historicYears.length)
     };
 }
 
@@ -54,14 +54,18 @@ function backgroundSeries(region) {
  * world total: outside the Global region the curve is drawn empty rather than wrong, so
  * that trace 0 of every figure is the history curve whichever region is selected.
  */
-const OBSERVED_YEARS = range(OBSERVED_HISTORY_START,
-    OBSERVED_HISTORY_START + OBSERVED_HISTORY["Temperature"].length - 1);
+const OBSERVED_HISTORY_END =
+    OBSERVED_HISTORY_START + OBSERVED_HISTORY["Temperature"].length - 1;
 
 function observedTrace(series, globalOnly = false) {
     if (globalOnly && state.currentRegion !== "Global") {
         return grayHistoryTrace([], []);
     }
-    return grayHistoryTrace(OBSERVED_YEARS, OBSERVED_HISTORY[series]);
+    // Stop where the designed pathway takes over, as the fossil CO2 history does, so that
+    // starting the scenario before the end of the observations does not draw both at once.
+    const years = range(OBSERVED_HISTORY_START,
+        Math.min(OBSERVED_HISTORY_END, state.firstYear));
+    return grayHistoryTrace(years, OBSERVED_HISTORY[series].slice(0, years.length));
 }
 
 // ---------------------------------------------------------------- editable figure
@@ -120,7 +124,7 @@ export function plotRegionalEmissions(plothistory = false) {
     if (plothistory) {
         historyTrace.x = state.historicYears;
         historyTrace.y = CO2emissionHistory[state.currentRegion]
-            .slice(0, LAST_HISTORIC_YEAR + 1 - backgroundDataStart);
+            .slice(0, state.historicYears.length);
         draw(figureOf["regionalCO2emissions"], historyTrace, options);
     }
 

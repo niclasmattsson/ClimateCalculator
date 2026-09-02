@@ -15,6 +15,8 @@ export function submitEmissions() {
         climatesensitivity,
         firstyear: state.firstYear,
         lastyear: state.lastYear,
+        firstcalibrationyear: state.firstCalibrationYear,
+        lastcalibrationyear: state.lastCalibrationYear,
         emissions: state.emissions["Global"]
     };
 

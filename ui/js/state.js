@@ -2,7 +2,7 @@
 // `var`s on `window`; collecting them here makes every read and write greppable.
 
 import { range } from "./utils.js";
-import { ALL_REGIONS, BASE_YEAR, LAST_HISTORIC_YEAR } from "./settings.js";
+import { ALL_REGIONS, BASE_YEAR, LAST_HISTORIC_YEAR, CALIBRATION_YEARS } from "./settings.js";
 import { backgroundDataStart } from "./data/emissionHistory.js";
 
 const perRegion = (makeValue) => Object.fromEntries(ALL_REGIONS.map((r) => [r, makeValue()]));
@@ -15,6 +15,11 @@ export const state = {
     firstDisplayYear: 2000,
     years: range(BASE_YEAR, 2100),
     historicYears: range(backgroundDataStart, LAST_HISTORIC_YEAR),
+
+    // Window of observations the model calibrates against, from the slider in the settings
+    // panel. Takes effect on the next model run, not on the runs already drawn.
+    firstCalibrationYear: CALIBRATION_YEARS[0],
+    lastCalibrationYear: CALIBRATION_YEARS[1],
 
     // Scenario selection.
     currentSSP: "SSP2-Baseline",
@@ -46,7 +51,12 @@ export const state = {
     lastBreakYear: undefined
 };
 
-/** Recompute the derived year vector after the year-selection slider moves. */
+/**
+ * Recompute the derived year vectors after the year-selection slider moves. The observed
+ * history stops where the designed pathway takes over, so that the two do not overlap when
+ * the scenario is started before the last year of the observations.
+ */
 export function updateYears() {
     state.years = range(state.firstYear, state.lastYear);
+    state.historicYears = range(backgroundDataStart, Math.min(LAST_HISTORIC_YEAR, state.firstYear));
 }

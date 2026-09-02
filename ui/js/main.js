@@ -2,7 +2,10 @@
 
 import { state, updateYears } from "./state.js";
 import { dom, figureOf, allFigures } from "./dom.js";
-import { ALL_REGIONS, BASE_YEAR, REGION_COLORS, REGION_BUTTON_LAYOUTS } from "./settings.js";
+import {
+    ALL_REGIONS, BASE_YEAR, REGION_COLORS, REGION_BUTTON_LAYOUTS,
+    CALIBRATION_YEARS, FIRST_CALIBRATION_YEAR
+} from "./settings.js";
 import { decimals } from "./utils.js";
 import { getSSP, completeExternalData } from "./sspData.js";
 import {
@@ -192,6 +195,19 @@ function createSliders() {
         format: decimals(0)
     });
 
+    // Narrowing this window is a diagnostic: a short window pins the model to the end of the
+    // observed record, a long one fits the whole trajectory and lets the endpoint drift.
+    noUiSlider.create(dom.calibrationSlider, {
+        start: CALIBRATION_YEARS,
+        connect: [false, true, false],
+        tooltips: [true, true],
+        step: 1,
+        margin: 1,
+        range: { min: FIRST_CALIBRATION_YEAR, max: BASE_YEAR },
+        pips: { mode: "count", values: 5, density: 10 },
+        format: decimals(0)
+    });
+
     noUiSlider.create(dom.harmonizationSlider, {
         start: state.harmonizationFactor,
         tooltips: [true],
@@ -243,6 +259,13 @@ function connectSettingsPanel() {
             tick0: Math.floor(state.firstDisplayYear / 20) * 20
         });
         refreshAllEmissionFigures();
+    });
+
+    // No redraw: the window only changes what the model does on the next run.
+    dom.calibrationSlider.noUiSlider.on("set", function () {
+        const values = this.get();
+        state.firstCalibrationYear = Number(values[0]);
+        state.lastCalibrationYear = Number(values[1]);
     });
 
     dom.harmonizationSlider.noUiSlider.on("set", function () {

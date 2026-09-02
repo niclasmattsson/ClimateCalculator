@@ -25,6 +25,13 @@ function startserver()
         
         firstyear = cccdata["firstyear"]
         lastyear = cccdata["lastyear"]
+
+        # The interface may narrow the window the aerosol and fertilization factors are
+        # fitted to. Anything but the default window bypasses the precalculated history
+        # cache and recalibrates from 1765, which costs about a second per run.
+        firstcalibration = Int(get(cccdata, "firstcalibrationyear", CALIBRATIONYEARS[1]))
+        lastcalibration = Int(get(cccdata, "lastcalibrationyear", CALIBRATIONYEARS[end]))
+        calibrationyears = firstcalibration:lastcalibration
         
         rcp = "RCP3PD"
         annualEmissions = getscenario(rcp)
@@ -33,7 +40,9 @@ function startserver()
         annualEmissions[:N2O][iyear(firstyear):iyear(lastyear)] = cccdata["emissions"]["N2O"] .+ NATURALN2O
         
         results, p = solveclimate(annualEmissions, usecache=true, lambda=cccdata["climatesensitivity"]/3.7,
-                                    rcp=rcp, firstyear=firstyear, lastyear=lastyear)
+                                    rcp=rcp, firstyear=firstyear, lastyear=lastyear,
+                                    calibrationyears=calibrationyears)
+        println("\nCalibration window: $calibrationyears")
         printresults(firstyear:10:lastyear, results, p, annualEmissions, rcp)
         
         return JSON.json(readresults(annualEmissions, results, p, firstyear, lastyear))

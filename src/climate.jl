@@ -19,21 +19,25 @@ end
 # oceantempfeedback: set to 0 to disable temperature feedback in ocean carbon uptake (default is 1)
 # bioQ10factor: set to 1 to disable temperature feedback in the terrestrial biosphere (default is 2)
 # equilibriumCO2 [ppm]: use 278 to start model in preindustrial times
+# calibrationyears: window of observations the aerosol and fertilization factors are fitted to
 function getparams(annualemissions;  firstyear::Int=BASEYEAR, lastyear::Int=2100, usecache::Bool=true,
 						timestep::Float64=0.01, lambda::Float64=0.8, rcp::String="RCP45",
-						oceantempfeedback::Float64=1.0, bioQ10factor::Float64=2.0, equilibriumCO2::Float64=278.0)
+						oceantempfeedback::Float64=1.0, bioQ10factor::Float64=2.0, equilibriumCO2::Float64=278.0,
+						calibrationyears::UnitRange{Int}=CALIBRATIONYEARS)
 
 	p = ClimateParams(timestep, lambda, 0.0, 0.0, 0.0, oceantempfeedback, bioQ10factor, equilibriumCO2)
-	# the cached history was calculated with the default feedback parameters, so both the
-	# calibration and the cached state are wrong for any other value
-	usecache = usecache && oceantempfeedback == 1.0 && bioQ10factor == 2.0 && equilibriumCO2 == 278.0
+	# the cached history was calculated with the default feedback parameters and the default
+	# calibration window, so both the calibration and the cached state are wrong for any
+	# other value. Recalibrating and integrating from 1765 instead costs about a second.
+	usecache = usecache && oceantempfeedback == 1.0 && bioQ10factor == 2.0 && equilibriumCO2 == 278.0 &&
+					calibrationyears == CALIBRATIONYEARS
 	if usecache
 		p.aerosolforcingfactor = interpolatespline(lambda, cached_coeff_forcing)
 		p.fertilization = interpolatespline(lambda, cached_coeff_fertilization)
 		p.tempbaseline = interpolatespline(lambda, cached_coeff_tempbaseline)
 	else
-		calibrateforcing!(p, rcp)
-		calibratefertilization!(annualemissions, p, rcp)
+		calibrateforcing!(p, rcp, calibrationyears)
+		calibratefertilization!(annualemissions, p, rcp, calibrationyears)
 	end
 	return p, firstyear, lastyear, usecache, rcp
 end

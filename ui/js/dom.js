@@ -8,6 +8,7 @@ export const dom = {
     csSlider: byId("csSlider"),
     yearSelectionSlider: byId("yearSelectionSlider"),
     harmonizationSlider: byId("harmonizationSlider"),
+    calibrationSlider: byId("calibrationSlider"),
 
     // The enlarged, editable emissions plot and its overlay.
     ghostFigure: byId("ghostfigure"),
