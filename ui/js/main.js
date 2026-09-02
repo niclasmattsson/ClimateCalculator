@@ -4,9 +4,9 @@ import { state, updateYears } from "./state.js";
 import { dom, figureOf, allFigures } from "./dom.js";
 import {
     ALL_REGIONS, BASE_YEAR, REGION_COLORS, REGION_BUTTON_LAYOUTS,
-    CALIBRATION_YEARS, FIRST_CALIBRATION_YEAR
+    CALIBRATION_YEARS, FIRST_CALIBRATION_YEAR, FIRST_SCENARIO_YEAR, LAST_SCENARIO_YEAR
 } from "./settings.js";
-import { decimals } from "./utils.js";
+import { decimals, clamp } from "./utils.js";
 import { getSSP, completeExternalData } from "./sspData.js";
 import {
     baseLayout, plotConfigOptions, PLOTLY_COLORS, dummyLine, dummyMarkers, historyTrace
@@ -19,7 +19,7 @@ import {
 import {
     plotEditEmissions, plotEmissions, plotRegionalEmissions, plotOtherEmissions,
     plotPopulation, plotIntensity, plotResultHistory, autoScale, fixAutoscale,
-    updateFigures, refreshAllEmissionFigures, nudgeAllTitles
+    updateFigures, refreshAllEmissionFigures, resetResultFigures, nudgeAllTitles
 } from "./figures.js";
 import { logEmissions, addRowToLog, toggleLogRow, activateRow, resetLog } from "./runLog.js";
 import { submitEmissions } from "./api.js";
@@ -179,19 +179,16 @@ function createSliders() {
         format: decimals(1, " &deg;C")
     });
 
+    // One-year steps throughout, so that the scenario can start on the base year itself
+    // rather than on the nearest decade. The range is non-linear to give the years the
+    // pathway is actually drawn over most of the track, and stops at LAST_SCENARIO_YEAR:
+    // neither the SSP database nor the model server can serve a later end year.
     noUiSlider.create(dom.yearSelectionSlider, {
-        start: [2000, BASE_YEAR, 2100],
+        start: [2000, BASE_YEAR, LAST_SCENARIO_YEAR],
         connect: [false, false, true, false],
         tooltips: [true, true, true],
-        step: 10,
-        range: {
-            min: [1960, 20],
-            "15%": [2000, 5],
-            "40%": [2020, 10],
-            "70%": [2100, 50],
-            "85%": [2200, 100],
-            max: [2500]
-        },
+        step: 1,
+        range: { min: 1960, "20%": 2000, "40%": 2020, max: LAST_SCENARIO_YEAR },
         format: decimals(0)
     });
 
@@ -247,17 +244,39 @@ function connectSettingsPanel() {
     dom.modeToggle.addEventListener("click", () => setAdvancedMode(!state.advancedMode));
 
     dom.yearSelectionSlider.noUiSlider.on("set", function () {
-        const values = this.get();
-        state.firstDisplayYear = Number(values[0]);
-        state.firstYear = Number(values[1]);
-        state.lastYear = Number(values[2]);
+        const values = this.get().map(Number);
+
+        // The pathway is cut out of the SSP database, which starts in FIRST_SCENARIO_YEAR.
+        // Below it getSSP() would slice from a negative index and return the tail of the
+        // series, so the handle is pushed back and this fires again with the fixed value.
+        const scenarioStart = clamp(values[1], FIRST_SCENARIO_YEAR, LAST_SCENARIO_YEAR);
+        if (scenarioStart !== values[1]) {
+            this.set([values[0], scenarioStart, values[2]]);
+            return;
+        }
+
+        const rangeChanged = scenarioStart !== state.firstYear || values[2] !== state.lastYear;
+        state.firstDisplayYear = values[0];
+        state.firstYear = scenarioStart;
+        state.lastYear = values[2];
         updateYears();
         // Merge, so that dtick, ticks, ticklen, tickcolor, fixedrange and hoverformat
         // from plotConfig.js survive a change of year range.
         Object.assign(baseLayout.xaxis, {
-            range: [Math.floor(state.firstDisplayYear / 20) * 20 - 1, 2101],
+            range: [Math.floor(state.firstDisplayYear / 20) * 20 - 1, state.lastYear + 1],
             tick0: Math.floor(state.firstDisplayYear / 20) * 20
         });
+
+        // Every emission series and every logged run is indexed from the old first year, so
+        // moving either end of the scenario invalidates them: rebuild from the scenario and
+        // start the log over. Moving only the first year drawn leaves all of that alone.
+        if (rangeChanged) {
+            loadScenarioEmissions({ respectCO2Lock: false });
+            updateHandlesFromEmissions();
+            resetLog();
+            logEmissions();
+            resetResultFigures();
+        }
         refreshAllEmissionFigures();
     });
 

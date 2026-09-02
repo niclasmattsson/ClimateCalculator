@@ -338,6 +338,23 @@ export function fixAutoscale() {
     }
 }
 
+/**
+ * Put the model-result figures back to observations only. Their traces came from runs made
+ * over a different year range, so a change to that range has to discard them, exactly as
+ * the run log is emptied at the same moment. The per-capita figure belongs here too: it is
+ * only ever drawn as part of a model run.
+ */
+export function resetResultFigures() {
+    for (const name of ["CO2concentration", "CH4concentration", "N2Oconcentration",
+                        "temperature", "intensity"]) {
+        Plotly.purge(figureOf[name]);
+    }
+    plotResultHistory();
+    draw(figureOf["intensity"], observedTrace("PerCapitaCO2"),
+        historyLayoutFor("CO<sub>2</sub> emissions per capita", PER_CAPITA_AXIS));
+    nudgeTitle(figureOf["intensity"]);
+}
+
 // ---------------------------------------------------------------- bulk redraws
 
 /** Redraw every emission figure from scratch, one trace per row of the model-run log. */

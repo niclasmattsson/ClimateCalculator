@@ -96,20 +96,24 @@ export function updatePointHandles() {
  * of the existing user-placed breakpoints.
  */
 export function updateHandlesFromEmissions() {
+    const { firstYear, lastYear, firstDisplayYear } = state;
+
+    // Breakpoints outside the scenario have nowhere to sit, so a year range that excludes
+    // them drops them rather than reading past the end of the emission series.
     let handleyears = currentHandles().filter((h) => h.type === "normal").map((h) => h.x);
     if (handleyears.length === 0) {
         handleyears = DEFAULT_HANDLE_YEARS;
     }
+    handleyears = handleyears.filter((yr) => yr > firstYear && yr < lastYear);
 
     state.handles[state.currentRegion] = [];
     const emis = state.emissions[state.currentRegion]["FossilCO2"];
-    const { firstYear, firstDisplayYear } = state;
 
     addHandle("hidden", firstDisplayYear,
         CO2emissionHistory[state.currentRegion][firstDisplayYear - backgroundDataStart]);
     addHandle("hidden", firstYear, emis[0]);
     handleyears.forEach((yr) => addHandle("normal", yr, emis[yr - firstYear]));
-    addHandle("final", 2100, emis[2100 - firstYear]);
+    addHandle("final", lastYear, emis[lastYear - firstYear]);
     addHandle("spawn");
     state.lastBreakYear = firstYear;
 

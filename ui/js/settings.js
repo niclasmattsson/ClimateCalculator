@@ -12,6 +12,12 @@ export const LAST_HISTORIC_YEAR = 2023;
 // Must match BASEYEAR in src/settings.jl, which the model's cached history is built around.
 export const BASE_YEAR = 2023;
 
+// Years the SSP scenario database covers, and so the years the designed pathway can span.
+// getSSP() indexes its annual series from FIRST_SCENARIO_YEAR; the model server cannot
+// return results past LAST_SCENARIO_YEAR either.
+export const FIRST_SCENARIO_YEAR = 2005;
+export const LAST_SCENARIO_YEAR = 2100;
+
 // Default window of observations the model fits its aerosol forcing factor and its CO2
 // fertilization factor to, and the earliest year the calibration slider allows. Must match
 // CALIBRATIONYEARS in src/settings.jl, and start after BASELINEYEARS ends there in 1900.
