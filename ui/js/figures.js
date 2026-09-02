@@ -234,18 +234,29 @@ const temperatureLayout = () => historyLayoutFor(
 
 /**
  * The observed record on the four model-result figures. Unlike the emission figures these
- * are empty until the first model run, so this is what puts something on them at start-up;
- * it must run on an empty figure, so that the history stays trace 0.
+ * hold no run until the model is run, and a lone history curve on an otherwise empty chart
+ * reads as a result rather than as a backdrop, so it is drawn hidden and showHistory()
+ * below reveals it along with the first result. Drawing it now rather than later is what
+ * gives the figures their axes and their title, and keeps the history at trace 0.
  */
 export function plotResultHistory() {
-    draw(figureOf["CO2concentration"], observedTrace("CO2concentration"),
+    const hidden = (series) => Object.assign(observedTrace(series), { visible: false });
+    draw(figureOf["CO2concentration"], hidden("CO2concentration"),
         concentrationLayout("CO<sub>2</sub>", "ppm"));
-    draw(figureOf["CH4concentration"], observedTrace("CH4concentration"),
+    draw(figureOf["CH4concentration"], hidden("CH4concentration"),
         concentrationLayout("CH<sub>4</sub>", "ppb"));
-    draw(figureOf["N2Oconcentration"], observedTrace("N2Oconcentration"),
+    draw(figureOf["N2Oconcentration"], hidden("N2Oconcentration"),
         concentrationLayout("N<sub>2</sub>O", "ppb"));
-    draw(figureOf["temperature"], observedTrace("Temperature"), temperatureLayout());
+    draw(figureOf["temperature"], hidden("Temperature"), temperatureLayout());
     nudgeResultTitles();
+}
+
+/** Reveal the observed record of a result figure, now that there is a result to put it behind. */
+function showHistory(name) {
+    const figure = figureOf[name];
+    if (figure.data && figure.data.length && figure.data[0].visible === false) {
+        Plotly.restyle(figure, { visible: true }, 0);
+    }
 }
 
 function nudgeResultTitles() {
@@ -257,6 +268,9 @@ function nudgeResultTitles() {
 }
 
 export function plotConcentration(concentrations) {
+    showHistory("CO2concentration");
+    showHistory("CH4concentration");
+    showHistory("N2Oconcentration");
     draw(figureOf["CO2concentration"], { x: state.years, y: concentrations["CO2"], name: "" },
         concentrationLayout("CO<sub>2</sub>", "ppm"));
     nudgeTitle(figureOf["CO2concentration"]);
@@ -272,6 +286,7 @@ export function plotConcentration(concentrations) {
 }
 
 export function plotTemperature(temp) {
+    showHistory("temperature");
     draw(figureOf["temperature"], { x: state.years, y: temp, name: "" }, temperatureLayout());
     figureOf["temperature"].querySelector(".gtitle .line").setAttribute("y", 35);
     figureOf["temperature"].querySelector(".gtitle .line:last-Child").setAttribute("y", 35);
@@ -339,10 +354,10 @@ export function fixAutoscale() {
 }
 
 /**
- * Put the model-result figures back to observations only. Their traces came from runs made
- * over a different year range, so a change to that range has to discard them, exactly as
- * the run log is emptied at the same moment. The per-capita figure belongs here too: it is
- * only ever drawn as part of a model run.
+ * Put the model-result figures back to their start-up state. Their traces came from runs
+ * made over a different year range, so a change to that range has to discard them, exactly
+ * as the run log is emptied at the same moment. The per-capita figure belongs here too: its
+ * curve is a model result even though the figure is not.
  */
 export function resetResultFigures() {
     for (const name of ["CO2concentration", "CH4concentration", "N2Oconcentration",
@@ -350,9 +365,8 @@ export function resetResultFigures() {
         Plotly.purge(figureOf[name]);
     }
     plotResultHistory();
-    draw(figureOf["intensity"], observedTrace("PerCapitaCO2"),
-        historyLayoutFor("CO<sub>2</sub> emissions per capita", PER_CAPITA_AXIS));
-    nudgeTitle(figureOf["intensity"]);
+    plotIntensity(true, true);
+    nudgeAllTitles();
 }
 
 // ---------------------------------------------------------------- bulk redraws
