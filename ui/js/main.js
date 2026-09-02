@@ -19,7 +19,8 @@ import {
 import {
     plotEditEmissions, plotEmissions, plotRegionalEmissions, plotOtherEmissions,
     plotPopulation, plotIntensity, plotResultHistory, autoScale, fixAutoscale,
-    updateFigures, refreshAllEmissionFigures, resetResultFigures, nudgeAllTitles
+    updateFigures, refreshAllEmissionFigures, resetResultFigures, nudgeAllTitles,
+    applyDisplayRange
 } from "./figures.js";
 import { logEmissions, addRowToLog, toggleLogRow, activateRow, resetLog } from "./runLog.js";
 import { submitEmissions } from "./api.js";
@@ -282,6 +283,9 @@ function connectSettingsPanel() {
             resetResultFigures();
         }
         refreshAllEmissionFigures();
+        // Last, and whether or not anything was redrawn: the figures that are not redrawn
+        // here would otherwise keep the axis they were drawn with.
+        applyDisplayRange();
     });
 
     // No redraw: the window only changes what the model does on the next run.

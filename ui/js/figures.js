@@ -1,7 +1,7 @@
 // Everything that draws a Plotly figure.
 
 import { state } from "./state.js";
-import { dom, figureOf } from "./dom.js";
+import { dom, figureOf, allFigures } from "./dom.js";
 import { cloneObject, range } from "./utils.js";
 import { getSSP } from "./sspData.js";
 import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
@@ -599,19 +599,45 @@ export function autoScale(event) {
     }
     if (max > -Infinity) Plotly.relayout(figure, { "yaxis.range": [min * 1.1, max * 1.1] });
 
-    // The spawn handle sits at a fixed pixel position, so its data coordinates move.
-    for (const handle of state.handles[state.currentRegion]) {
-        if (handle.type === "spawn") {
-            handle.x = dom.editEmissions._fullLayout.xaxis.p2l(SPAWN_POSITION.x);
-            handle.y = dom.editEmissions._fullLayout.yaxis.p2l(SPAWN_POSITION.y);
-        }
-    }
+    replaceSpawnHandle();
     updateEditEmissionsFromHandles();
 
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
+}
+
+/** The spawn handle sits at a fixed pixel position, so its data coordinates move. */
+function replaceSpawnHandle() {
+    for (const handle of state.handles[state.currentRegion]) {
+        if (handle.type === "spawn") {
+            handle.x = dom.editEmissions._fullLayout.xaxis.p2l(SPAWN_POSITION.x);
+            handle.y = dom.editEmissions._fullLayout.yaxis.p2l(SPAWN_POSITION.y);
+        }
+    }
+}
+
+/**
+ * Put the current x-axis on every figure that is already drawn. Moving the first year drawn
+ * changes nothing but the axis, so the figures are not redrawn for it - and a figure only
+ * takes the axis out of baseLayout at the moment it is drawn. The emission figures happened
+ * to follow the setting because a change of year range redraws them for other reasons; the
+ * concentration, temperature, per capita and component figures hold model results that the
+ * setting does not invalidate, and so kept the axis they were born with.
+ */
+export function applyDisplayRange() {
+    for (const figure of [...allFigures(), dom.editEmissions]) {
+        if (!figure._fullLayout) continue;      // purged, or not drawn yet
+        Plotly.relayout(figure, {
+            "xaxis.range": baseLayout.xaxis.range.slice(),
+            "xaxis.tick0": baseLayout.xaxis.tick0
+        });
+    }
+    // The editable figure's axis moved under the spawn handle, which is placed in pixels.
+    replaceSpawnHandle();
+    updateEditEmissionsFromHandles();
+    nudgeAllTitles();
 }
 
 /**

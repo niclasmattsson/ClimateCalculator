@@ -11,7 +11,7 @@ import { state } from "./state.js";
 import { dom } from "./dom.js";
 import { clamp } from "./utils.js";
 import { getSSP, observedFossilCO2 } from "./sspData.js";
-import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
+import { CO2emissionHistory } from "./data/emissionHistory.js";
 import {
     SHOW_SSP_INSTEAD_OF_HISTORY, DEFAULT_HANDLE_YEARS, SPAWN_POSITION, LAST_HISTORIC_YEAR
 } from "./settings.js";
@@ -109,8 +109,15 @@ export function updateHandlesFromEmissions() {
     state.handles[state.currentRegion] = [];
     const emis = state.emissions[state.currentRegion]["FossilCO2"];
 
-    addHandle("hidden", firstDisplayYear,
-        CO2emissionHistory[state.currentRegion][firstDisplayYear - backgroundDataStart]);
+    // An anchor on the observed record to the left of the pathway, which gives the curve a
+    // slope to leave its first year with. It is only there when the record actually reaches
+    // that far: the minimum chart year can be set past the end of the record, and past the
+    // start of the pathway, and reading the history there returns nothing - which used to
+    // put an undefined into the interpolation and null out the emission series.
+    const anchor = Math.min(firstDisplayYear, LAST_HISTORIC_YEAR);
+    if (anchor < firstYear) {
+        addHandle("hidden", anchor, observedFossilCO2(state.currentRegion, anchor));
+    }
     addHandle("hidden", firstYear, startOfPathway(emis));
     handleyears.forEach((yr) => addHandle("normal", yr, emis[yr - firstYear]));
     addHandle("final", lastYear, emis[lastYear - firstYear]);
@@ -197,7 +204,10 @@ export function startDragBehavior() {
         if (handle.type !== "final") {
             handle.x = clamp(xaxis.p2l(xmouse), xaxis.range[0] + 1, xaxis.range[1] - 1e-9);
         }
-        if (handle.type === "spawn" && handle.x > currentHandles()[1].x) {
+        // Past the first year of the pathway a dragged spawn handle becomes a breakpoint.
+        // (state.lastBreakYear rather than a position in the handle list, which shifts with
+        // the leading anchor and with the spawn handle's own place in the sort.)
+        if (handle.type === "spawn" && handle.x > state.lastBreakYear) {
             showTrash("rgba(0,0,0,.2)");
             handle.type = "normal";
         }
