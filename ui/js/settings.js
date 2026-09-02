@@ -21,7 +21,7 @@ export const LAST_SCENARIO_YEAR = 2100;
 // Default window of observations the model fits its aerosol forcing factor and its CO2
 // fertilization factor to, and the earliest year the calibration slider allows. Must match
 // CALIBRATIONYEARS in src/settings.jl, and start after BASELINEYEARS ends there in 1900.
-export const CALIBRATION_YEARS = [1960, BASE_YEAR];
+export const CALIBRATION_YEARS = [2010, BASE_YEAR];
 export const FIRST_CALIBRATION_YEAR = 1901;
 
 // Breakpoint years used when a region has no handles yet.

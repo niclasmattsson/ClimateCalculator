@@ -29,7 +29,7 @@ end
 	# CH4 and N2O are driven by inverted concentrations, so they should be near exact
 	@test concentration(:CH4, CC.BASEYEAR) ≈ CC.histConc[:CH4][iyear(CC.BASEYEAR)] atol=2.0
 	@test concentration(:N2O, CC.BASEYEAR) ≈ CC.histConc[:N2O][iyear(CC.BASEYEAR)] atol=0.5
-	# CO2 is emission-driven; the carbon cycle has one free parameter to fit 60 years with
+	# CO2 is emission-driven; the carbon cycle has one free parameter to fit CALIBRATIONYEARS with
 	@test concentration(:CO2, CC.BASEYEAR) ≈ CC.histConc[:CO2][iyear(CC.BASEYEAR)] atol=5.0
 end
 
@@ -82,14 +82,14 @@ end
 end
 
 @testset "stored results" begin
-	# Regression only: these are what the model said when it was rebaselined to 2023, not
-	# targets. Update them deliberately, with the reason in the commit message.
-	@test p.aerosolforcingfactor ≈ 1.1338 atol=0.001
-	@test p.fertilization ≈ 0.7354 atol=0.001
+	# Regression only: these are what the model said when CALIBRATIONYEARS was narrowed to
+	# 2010:2023, not targets. Update them deliberately, with the reason in the commit message.
+	@test p.aerosolforcingfactor ≈ 1.1281 atol=0.001
+	@test p.fertilization ≈ 0.7596 atol=0.001
 	@test p.tempbaseline ≈ 0.0832 atol=0.001
-	@test warming(CC.BASEYEAR) ≈ 1.3039 atol=0.001
-	@test warming(2100) ≈ 2.4027 atol=0.002
-	@test concentration(:CO2, 2100) ≈ 481.10 atol=0.05
+	@test warming(CC.BASEYEAR) ≈ 1.2924 atol=0.001
+	@test warming(2100) ≈ 2.3768 atol=0.002
+	@test concentration(:CO2, 2100) ≈ 477.22 atol=0.05
 end
 
 end

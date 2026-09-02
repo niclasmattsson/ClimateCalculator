@@ -9,7 +9,8 @@ const BASEYEAR = 2023
 # Window used to fit the aerosol forcing factor and the CO2 fertilization factor.
 # A long window fits a trajectory; the three-year window used before 2026 only pinned an
 # endpoint. Must start after BASELINEYEARS so the modelled baseline is complete first.
-const CALIBRATIONYEARS = 1960:BASEYEAR
+# The interface can narrow this per run; see the calibration slider in ui/js/main.js.
+const CALIBRATIONYEARS = 2010:BASEYEAR
 
 # Zero point for both observed and modelled temperature, as in IPCC AR6.
 const BASELINEYEARS = 1850:1900
