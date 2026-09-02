@@ -4,7 +4,7 @@ using Parameters, Optim
 
 export runscen, solveclimate, getscenario, calibrateforcing!, calibratefertilization!, printresults, iyear,
 		ClimateState, ClimateParams, annualresults, makecalibrationcache, startserver, importGlobalCarbonProject,
-		importobservations, writebaseyearemissions
+		importobservations, writebaseyearemissions, writeobservedhistory
 
 const YEARS				= 1765:2500
 const GAS				= [:CO2, :CH4, :N2O, :H2O, :O3]

@@ -93,3 +93,25 @@ export const historyTrace = {
         size: 3
     }
 };
+
+/**
+ * The observed-history curve on every figure other than the CO2 emission ones: gray and
+ * dotted, so that it reads as a different kind of line from the black history on the
+ * figure the user can actually edit.
+ *
+ * A fresh object each call, unlike `historyTrace` above, which Plotly keeps hold of.
+ */
+export function grayHistoryTrace(x, y) {
+    return {
+        x,
+        y,
+        cliponaxis: false,
+        mode: "lines",
+        line: { color: "#999", width: 1.5, dash: "dot" },
+        name: ""
+    };
+}
+
+// Every carousel figure now carries a history curve as trace 0, so the run traces start
+// at index 1 and the colorway needs a slot in front to keep run n on colour n.
+export const HISTORY_COLORWAY = ["#999", ...PLOTLY_COLORS];

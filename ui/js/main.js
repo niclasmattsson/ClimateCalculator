@@ -15,8 +15,8 @@ import {
 } from "./handles.js";
 import {
     plotEditEmissions, plotEmissions, plotRegionalEmissions, plotOtherEmissions,
-    plotPopulation, plotIntensity, autoScale, fixAutoscale, updateFigures,
-    refreshAllEmissionFigures, nudgeAllTitles
+    plotPopulation, plotIntensity, plotResultHistory, autoScale, fixAutoscale,
+    updateFigures, refreshAllEmissionFigures, nudgeAllTitles
 } from "./figures.js";
 import { logEmissions, addRowToLog, toggleLogRow, activateRow, resetLog } from "./runLog.js";
 import { submitEmissions } from "./api.js";
@@ -296,9 +296,10 @@ function connectRunLog() {
         state.currentRegionNumber = 0;
         plotEmissions(true);
         if (state.advancedMode) plotRegionalEmissions(true);
-        plotOtherEmissions();
-        plotPopulation();
-        plotIntensity(true);
+        plotOtherEmissions(true);
+        plotPopulation(true);
+        plotIntensity(true, true);
+        plotResultHistory();
         state.editExistingEmissions = true;
         resetLog();
         logEmissions();
@@ -321,13 +322,11 @@ function connectRunLog() {
             }
         }
         for (const figure of allFigures()) {
-            // The emissions figure carries the history curve as trace 0, so its run
-            // traces are offset by one. Figures that have not been plotted yet (the
-            // concentration and temperature ones, before the first model run) have no
-            // traces to delete.
+            // Every figure carries an observed-history curve as trace 0, so its run
+            // traces are offset by one. The concentration and temperature figures hold
+            // only that curve until the first model run, so they have nothing to delete.
             const traceCount = figure.data ? figure.data.length : 0;
-            const offset = figure === figureOf["CO2emissions"] ? 1 : 0;
-            const indices = deleteRows.map((r) => r + offset).filter((i) => i < traceCount);
+            const indices = deleteRows.map((r) => r + 1).filter((i) => i < traceCount);
             if (indices.length) Plotly.deleteTraces(figure, indices);
         }
 
@@ -391,9 +390,10 @@ function init() {
     plotEmissions(true);
     if (state.advancedMode) plotRegionalEmissions(true);
 
-    plotOtherEmissions();
-    plotPopulation();
-    plotIntensity(true);
+    plotOtherEmissions(true);
+    plotPopulation(true);
+    plotIntensity(true, true);
+    plotResultHistory();
     fixAutoscale();
     autoScale();
     updateEditEmissionsFromHandles();

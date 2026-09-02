@@ -49,8 +49,13 @@ export function toggleLogRow(event) {
     const ishidden = row.classList.contains("hiddenrow");
     for (const figure of allFigures()) {
         if (figure.classList.contains("js-plotly-plot") && !figure.classList.contains("newfigs")) {
-            Plotly.restyle(figure, { opacity: 1 - ishidden },
-                figure === dom.emissionsFigure ? runNumber + 1 : runNumber);
+            // Every carousel figure carries the observed history as trace 0, so the run
+            // traces start at 1. The result figures hold only that history until the model
+            // has been run, and then have no trace for this run to hide.
+            const trace = runNumber + 1;
+            if (trace < figure.data.length) {
+                Plotly.restyle(figure, { opacity: 1 - ishidden }, trace);
+            }
         }
     }
 }

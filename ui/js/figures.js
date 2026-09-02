@@ -2,16 +2,27 @@
 
 import { state } from "./state.js";
 import { dom, figureOf } from "./dom.js";
-import { cloneObject } from "./utils.js";
+import { cloneObject, range } from "./utils.js";
 import { getSSP } from "./sspData.js";
 import { CO2emissionHistory, backgroundDataStart } from "./data/emissionHistory.js";
+import { OBSERVED_HISTORY, OBSERVED_HISTORY_START } from "./data/observedHistory.js";
 import { SHOW_SSP_INSTEAD_OF_HISTORY, LAST_HISTORIC_YEAR, SPAWN_POSITION } from "./settings.js";
 import { updateEditEmissionsFromHandles } from "./handles.js";
-import { baseLayout, plotConfigOptions, PLOTLY_COLORS, historyTrace } from "./plotConfig.js";
+import {
+    baseLayout, plotConfigOptions, PLOTLY_COLORS, HISTORY_COLORWAY, historyTrace, grayHistoryTrace
+} from "./plotConfig.js";
 
 /** Plot options derived from the shared layout, with this figure's title and y-axis. */
 function layoutFor(title, yaxis, overrides = {}) {
     return Object.assign(cloneObject(baseLayout), { title, yaxis }, overrides);
+}
+
+/**
+ * Same, for a figure whose trace 0 is the gray observed-history curve. The extra colour
+ * in front of the colourway keeps run n on the same colour as its swatch in the log.
+ */
+function historyLayoutFor(title, yaxis, overrides = {}) {
+    return layoutFor(title, yaxis, Object.assign({ colorway: HISTORY_COLORWAY }, overrides));
 }
 
 const gtCO2 = (hoverformat) => ({ title: "Gton CO<sub>2</sub>/year", hoverformat });
@@ -35,6 +46,22 @@ function backgroundSeries(region) {
         x: state.historicYears,
         y: CO2emissionHistory[region].slice(0, LAST_HISTORIC_YEAR + 1 - backgroundDataStart)
     };
+}
+
+/**
+ * The observed history behind the figures other than the fossil CO2 ones, from
+ * data/observedHistory.js. `globalOnly` marks the series the repository only has as a
+ * world total: outside the Global region the curve is drawn empty rather than wrong, so
+ * that trace 0 of every figure is the history curve whichever region is selected.
+ */
+const OBSERVED_YEARS = range(OBSERVED_HISTORY_START,
+    OBSERVED_HISTORY_START + OBSERVED_HISTORY["Temperature"].length - 1);
+
+function observedTrace(series, globalOnly = false) {
+    if (globalOnly && state.currentRegion !== "Global") {
+        return grayHistoryTrace([], []);
+    }
+    return grayHistoryTrace(OBSERVED_YEARS, OBSERVED_HISTORY[series]);
 }
 
 // ---------------------------------------------------------------- editable figure
@@ -126,7 +153,7 @@ export function perCapita(region) {
     return series;
 }
 
-export function plotIntensity(plotglobalfigure) {
+export function plotIntensity(plotglobalfigure, plothistory = false) {
     const intensity = {};
 
     if (state.advancedMode) {
@@ -142,14 +169,19 @@ export function plotIntensity(plotglobalfigure) {
     }
 
     if (plotglobalfigure) {
-        const options = layoutFor("CO<sub>2</sub> emissions per capita", PER_CAPITA_AXIS);
+        const options = historyLayoutFor("CO<sub>2</sub> emissions per capita", PER_CAPITA_AXIS);
+        // Observed total CO2 over the observed world population. perCapita() divides by
+        // the scenario's population instead, which is a few per cent lower in 2023, so the
+        // two meet with a small step.
+        if (plothistory) draw(figureOf["intensity"], observedTrace("PerCapitaCO2"), options);
         draw(figureOf["intensity"], { x: state.years, y: intensity["Global"], name: "" }, options);
     }
 }
 
-export function plotPopulation() {
-    const options = layoutFor("Population:  " + state.currentRegion,
+export function plotPopulation(plothistory = false) {
+    const options = historyLayoutFor("Population:  " + state.currentRegion,
         { title: "billion people", rangemode: "tozero", hoverformat: ".3f" });
+    if (plothistory) draw(figureOf["population"], observedTrace("Population", true), options);
     draw(figureOf["population"], {
         x: state.years,
         y: state.emissions[state.currentRegion]["Population"],
@@ -157,47 +189,86 @@ export function plotPopulation() {
     }, options);
 }
 
-export function plotOtherEmissions() {
+export function plotOtherEmissions(plothistory = false) {
     const region = state.currentRegion;
+    const withHistory = (name, series, options) => {
+        if (plothistory) draw(figureOf[name], observedTrace(series, true), options);
+    };
 
+    const ch4Options = historyLayoutFor("CH<sub>4</sub> emissions:  " + region,
+        { title: "MtCH<sub>4</sub>/year", rangemode: "tozero", hoverformat: ".0f" });
+    withHistory("CH4emissions", "CH4", ch4Options);
     draw(figureOf["CH4emissions"], { x: state.years, y: state.emissions[region]["CH4"], name: "" },
-        layoutFor("CH<sub>4</sub> emissions:  " + region,
-            { title: "MtCH<sub>4</sub>/year", rangemode: "tozero", hoverformat: ".0f" }));
+        ch4Options);
     nudgeTitle(figureOf["CH4emissions"]);
 
+    const n2oOptions = historyLayoutFor("N<sub>2</sub>O emissions:  " + region,
+        { title: "MtN/year", rangemode: "tozero", hoverformat: ".2f" });
+    withHistory("N2Oemissions", "N2O", n2oOptions);
     draw(figureOf["N2Oemissions"], { x: state.years, y: state.emissions[region]["N2O"], name: "" },
-        layoutFor("N<sub>2</sub>O emissions:  " + region,
-            { title: "MtN/year", rangemode: "tozero", hoverformat: ".2f" }));
+        n2oOptions);
     nudgeTitle(figureOf["N2Oemissions"]);
 
+    const otherOptions = historyLayoutFor("Other CO<sub>2</sub> emissions:  " + region,
+        Object.assign(gtCO2(".1f"), { rangemode: "tozero" }));
+    withHistory("otherCO2emissions", "OtherCO2", otherOptions);
     draw(figureOf["otherCO2emissions"], { x: state.years, y: state.emissions[region]["OtherCO2"], name: "" },
-        layoutFor("Other CO<sub>2</sub> emissions:  " + region,
-            Object.assign(gtCO2(".1f"), { rangemode: "tozero" })));
+        otherOptions);
     nudgeTitle(figureOf["otherCO2emissions"]);
 }
 
 // ---------------------------------------------------------------- model results
 
+// The result figures are drawn once per model run, so their layouts are built in one place
+// and reused by plotResultHistory() below, which draws the observed record behind them.
+const concentrationLayout = (gas, unit) => historyLayoutFor(
+    gas + " concentration in the atmosphere", { title: unit, hoverformat: ".0f" });
+
+const temperatureLayout = () => historyLayoutFor(
+    "Mean surface temperature<br><span>(change since preindustrial times)</span>",
+    { title: "degrees (&deg;C)", rangemode: "tozero", hoverformat: ".2f" });
+
+/**
+ * The observed record on the four model-result figures. Unlike the emission figures these
+ * are empty until the first model run, so this is what puts something on them at start-up;
+ * it must run on an empty figure, so that the history stays trace 0.
+ */
+export function plotResultHistory() {
+    draw(figureOf["CO2concentration"], observedTrace("CO2concentration"),
+        concentrationLayout("CO<sub>2</sub>", "ppm"));
+    draw(figureOf["CH4concentration"], observedTrace("CH4concentration"),
+        concentrationLayout("CH<sub>4</sub>", "ppb"));
+    draw(figureOf["N2Oconcentration"], observedTrace("N2Oconcentration"),
+        concentrationLayout("N<sub>2</sub>O", "ppb"));
+    draw(figureOf["temperature"], observedTrace("Temperature"), temperatureLayout());
+    nudgeResultTitles();
+}
+
+function nudgeResultTitles() {
+    nudgeTitle(figureOf["CO2concentration"]);
+    nudgeTitle(figureOf["CH4concentration"]);
+    nudgeTitle(figureOf["N2Oconcentration"]);
+    figureOf["temperature"].querySelector(".gtitle .line").setAttribute("y", 35);
+    figureOf["temperature"].querySelector(".gtitle .line:last-Child").setAttribute("y", 35);
+}
+
 export function plotConcentration(concentrations) {
     draw(figureOf["CO2concentration"], { x: state.years, y: concentrations["CO2"], name: "" },
-        layoutFor("CO<sub>2</sub> concentration in the atmosphere", { title: "ppm", hoverformat: ".0f" }));
+        concentrationLayout("CO<sub>2</sub>", "ppm"));
     nudgeTitle(figureOf["CO2concentration"]);
 
     draw(figureOf["CH4concentration"], { x: state.years, y: concentrations["CH4"], name: "" },
-        layoutFor("CH<sub>4</sub> concentration in the atmosphere", { title: "ppb", hoverformat: ".0f" }));
+        concentrationLayout("CH<sub>4</sub>", "ppb"));
     nudgeTitle(figureOf["CH4concentration"]);
 
     // NOTE: no `name` on this trace, unlike the two above.
     draw(figureOf["N2Oconcentration"], { x: state.years, y: concentrations["N2O"] },
-        layoutFor("N<sub>2</sub>O concentration in the atmosphere", { title: "ppb", hoverformat: ".0f" }));
+        concentrationLayout("N<sub>2</sub>O", "ppb"));
     nudgeTitle(figureOf["N2Oconcentration"]);
 }
 
 export function plotTemperature(temp) {
-    const options = layoutFor(
-        "Mean surface temperature<br><span>(change since preindustrial times)</span>",
-        { title: "degrees (&deg;C)", rangemode: "tozero", hoverformat: ".2f" });
-    draw(figureOf["temperature"], { x: state.years, y: temp, name: "" }, options);
+    draw(figureOf["temperature"], { x: state.years, y: temp, name: "" }, temperatureLayout());
     figureOf["temperature"].querySelector(".gtitle .line").setAttribute("y", 35);
     figureOf["temperature"].querySelector(".gtitle .line:last-Child").setAttribute("y", 35);
 }
@@ -219,10 +290,19 @@ export function autoScale(event) {
         figure = dom.editEmissions;
     }
 
-    const ydata = figure.data[0].y;
-    const min = Math.min(0, Math.min.apply(null, ydata)) * 1.1;
-    const max = Math.max.apply(null, ydata) * 1.1;
-    Plotly.relayout(figure, { "yaxis.range": [min, max] });
+    // On the editable figure only trace 0 is the emission path; traces 1 and 2 hold the
+    // background curve and the breakpoint markers. A carousel figure holds the observed
+    // history plus one trace per model run, and all of them should fit.
+    let min = 0;
+    let max = -Infinity;
+    for (const trace of (event ? figure.data : [figure.data[0]])) {
+        for (const y of trace.y || []) {
+            if (y === null || isNaN(y)) continue;
+            if (y < min) min = y;
+            if (y > max) max = y;
+        }
+    }
+    if (max > -Infinity) Plotly.relayout(figure, { "yaxis.range": [min * 1.1, max * 1.1] });
 
     // The spawn handle sits at a fixed pixel position, so its data coordinates move.
     for (const handle of state.handles[state.currentRegion]) {
@@ -267,15 +347,18 @@ export function refreshAllEmissionFigures() {
     const currentEmissions = cloneObject(state.emissions);
     for (let r = rows.length - 1; r >= 0; r--) {
         state.emissions = rows[r].emissions;
-        plotEmissions(r === rows.length - 1);
+        const first = r === rows.length - 1;
+        plotEmissions(first);
         if (state.advancedMode) plotRegionalEmissions(true);
-        plotOtherEmissions();
-        plotPopulation();
+        plotOtherEmissions(first);
+        plotPopulation(first);
     }
     for (const name of figlist) {
         for (let r = 0; r < rows.length; r++) {
             const ishidden = rows[r].classList.contains("hiddenrow");
-            Plotly.restyle(figureOf[name], { opacity: 1 - ishidden }, r);
+            // The rows were replotted oldest first, behind the history curve at trace 0,
+            // so row r (row 0 being the newest run) is trace rows.length - r.
+            Plotly.restyle(figureOf[name], { opacity: 1 - ishidden }, rows.length - r);
         }
     }
     state.emissions = currentEmissions;
