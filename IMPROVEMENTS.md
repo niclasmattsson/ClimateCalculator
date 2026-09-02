@@ -1,8 +1,9 @@
 # Proposed improvements — functionality and presentation
 
-Written August 2026, after the ten `ui/BUGS.md` fixes landed. **Nothing here has been
-applied.** Every file reference was checked against the current tree; every measurement was
-taken from the running app or from the data in the repository.
+Written August 2026, after the ten `ui/BUGS.md` fixes landed. Every file reference was
+checked against the current tree; every measurement was taken from the running app or from
+the data in the repository. **Item 1.2 has since been applied** (September 2026); nothing
+else here has.
 
 This document is deliberately narrow. Three neighbouring concerns are covered elsewhere and
 are not repeated:
@@ -22,7 +23,7 @@ What follows is everything else worth doing, in the order I would do it.
 | # | Item | Size | Depends on |
 |---|---|---|---|
 | 1.1 | Editable CH4, N2O and land-use CO2 | M | — |
-| 1.2 | Return and plot what the model already computes | M | — |
+| 1.2 | ~~Return and plot what the model already computes~~ **done** | M | — |
 | 1.3 | Observations on the temperature and concentration charts | S | helped by rebaseline |
 | 1.4 | Make net-negative emissions drawable | S | — |
 | 1.5 | Peak warming, net-zero year, threshold guides | S | — |
@@ -66,7 +67,7 @@ units and magnitudes differ by three orders of magnitude, and whether the base-s
 
 *Size: medium. This is the largest gap between what the interface implies and what it does.*
 
-### 1.2 Return and plot what the model already computes
+### 1.2 Return and plot what the model already computes — *done, September 2026*
 
 `readresults()` (`src/webserver.jl:6-19`) keeps `Temp_global`, three concentrations, and echoes
 back the emissions it was handed. Everything else in `ClimateState` is computed every timestep
@@ -94,6 +95,16 @@ The cost is a wider JSON response and two more carousel entries. For a teaching 
 the difference between a black box and a model you can look inside.
 
 *Size: medium, mostly on the Julia side.*
+
+**As built.** `readresults()` now also returns `carbonsinks` (total CO2 emissions split into
+atmosphere, ocean and land, all in GtCO2/year) and `forcing` (the five modelled gases plus
+aerosols, other and the total, in W/m2). Two carousel figures sit immediately to the right
+of the temperature figure, *Carbon sinks* and *Radiative forcing*, with the Global Carbon
+Budget's own ocean and land sink estimates drawn behind the first. Unlike every other figure
+these show one run at a time -- half a dozen component curves per run would be unreadable
+overlaid -- so they follow whichever row is active in the run log, and the log's trace
+bookkeeping skips them. The land vs. ocean warming split under `Temp_land` and `Temp[1..50]`
+was left alone.
 
 ### 1.3 Put observations on the temperature and concentration charts
 

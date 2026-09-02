@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { dom } from "./dom.js";
 import {
     plotEmissions, plotRegionalEmissions, plotOtherEmissions,
-    plotPopulation, plotIntensity, plotConcentration, plotTemperature
+    plotPopulation, plotIntensity, plotConcentration, plotTemperature, plotRunComponents
 } from "./figures.js";
 import { addRowToLog } from "./runLog.js";
 
@@ -38,6 +38,10 @@ export function submitEmissions() {
         plotTemperature(response.temperature);
 
         const row = dom.runLog.rows[0];
+        // The carbon-sink and forcing figures show one run at a time, so the results are
+        // kept on the log row and redrawn whenever that row is made active again.
+        row.results = response;
+        plotRunComponents(response);
         row.cells[3].innerHTML = climatesensitivity.toFixed(1) + " &deg;C";
         const finalTemperature = response.temperature[response.temperature.length - 1];
         if (!finalTemperature) {

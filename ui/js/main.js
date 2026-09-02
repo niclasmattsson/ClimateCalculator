@@ -1,7 +1,7 @@
 // Wiring: builds the widgets, draws the initial figures and connects every control.
 
 import { state, updateYears } from "./state.js";
-import { dom, figureOf, allFigures } from "./dom.js";
+import { dom, figureOf, allFigures, isComponentFigure } from "./dom.js";
 import {
     ALL_REGIONS, BASE_YEAR, REGION_COLORS, REGION_BUTTON_LAYOUTS,
     CALIBRATION_YEARS, FIRST_CALIBRATION_YEAR, FIRST_SCENARIO_YEAR, LAST_SCENARIO_YEAR
@@ -367,6 +367,9 @@ function connectRunLog() {
             // Every figure carries an observed-history curve as trace 0, so its run
             // traces are offset by one. The concentration and temperature figures hold
             // only that curve until the first model run, so they have nothing to delete.
+            // The component figures are laid out per component rather than per run, and
+            // activateRow() below redraws them from whichever run survives.
+            if (isComponentFigure(figure)) continue;
             const traceCount = figure.data ? figure.data.length : 0;
             const indices = deleteRows.map((r) => r + 1).filter((i) => i < traceCount);
             if (indices.length) Plotly.deleteTraces(figure, indices);

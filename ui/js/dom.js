@@ -60,11 +60,23 @@ export const figureOf = {
     CO2emissions: carouselFigures[3],
     CO2concentration: carouselFigures[4],
     temperature: carouselFigures[5],
-    CH4concentration: carouselFigures[6],
-    N2Oconcentration: carouselFigures[7],
-    CH4emissions: carouselFigures[8],
-    N2Oemissions: carouselFigures[9]
+    carbonsinks: carouselFigures[6],
+    radiativeforcing: carouselFigures[7],
+    CH4concentration: carouselFigures[8],
+    N2Oconcentration: carouselFigures[9],
+    CH4emissions: carouselFigures[10],
+    N2Oemissions: carouselFigures[11]
 };
+
+/**
+ * True for the two figures that break a single model run into its components instead of
+ * carrying one trace per run (`carbonsinks` and `radiativeforcing`). The run log's trace
+ * bookkeeping -- hide a run, clear the hidden ones -- counts on the one-trace-per-run
+ * layout, so it skips these; figures.js redraws them from the active run instead.
+ */
+export function isComponentFigure(figure) {
+    return figure.classList.contains("componentfigure");
+}
 
 /**
  * All figures currently in the carousel, in DOM order. Queried fresh because advanced

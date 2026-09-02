@@ -2,11 +2,11 @@
 // stored on the row element as `row.emissions`.
 
 import { state } from "./state.js";
-import { dom, figureOf, allFigures } from "./dom.js";
+import { dom, figureOf, allFigures, isComponentFigure } from "./dom.js";
 import { cloneObject } from "./utils.js";
 import { PLOTLY_COLORS } from "./plotConfig.js";
 import { updateHandlesFromEmissions } from "./handles.js";
-import { plotRegionalEmissions } from "./figures.js";
+import { plotRegionalEmissions, plotRunComponents } from "./figures.js";
 
 const colorFor = (index) => PLOTLY_COLORS[index % PLOTLY_COLORS.length];
 
@@ -29,6 +29,9 @@ export function activateRow(row) {
     if (state.advancedMode) {
         plotRegionalEmissions(true);
     }
+    // The component figures hold one run rather than all of them, so they follow the
+    // active row. A row that has not been sent to the model yet leaves them empty.
+    plotRunComponents(row.results);
 }
 
 /**
@@ -48,7 +51,8 @@ export function toggleLogRow(event) {
     const runNumber = rows.length - Array.prototype.indexOf.call(rows, row) - 1;
     const ishidden = row.classList.contains("hiddenrow");
     for (const figure of allFigures()) {
-        if (figure.classList.contains("js-plotly-plot") && !figure.classList.contains("newfigs")) {
+        if (figure.classList.contains("js-plotly-plot") && !figure.classList.contains("newfigs")
+                && !isComponentFigure(figure)) {
             // Every carousel figure carries the observed history as trace 0, so the run
             // traces start at 1. The result figures hold only that history until the model
             // has been run, and then have no trace for this run to hide.

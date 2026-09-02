@@ -30,7 +30,8 @@ const draw = (figure, trace, options) => Plotly.plot(figure, [trace], options, p
 
 /** Move a figure's title down; Plotly puts it too close to the plot area. */
 function nudgeTitle(figure, y = 35) {
-    figure.querySelector(".gtitle").setAttribute("y", y);
+    const title = figure.querySelector(".gtitle");
+    if (title) title.setAttribute("y", y);
 }
 
 export function nudgeAllTitles() {
@@ -248,6 +249,7 @@ export function plotResultHistory() {
     draw(figureOf["N2Oconcentration"], hidden("N2Oconcentration"),
         concentrationLayout("N<sub>2</sub>O", "ppb"));
     draw(figureOf["temperature"], hidden("Temperature"), temperatureLayout());
+    plotRunComponents();
     nudgeResultTitles();
 }
 
@@ -290,6 +292,122 @@ export function plotTemperature(temp) {
     draw(figureOf["temperature"], { x: state.years, y: temp, name: "" }, temperatureLayout());
     figureOf["temperature"].querySelector(".gtitle .line").setAttribute("y", 35);
     figureOf["temperature"].querySelector(".gtitle .line:last-Child").setAttribute("y", 35);
+}
+
+// ---------------------------------------------------------------- run components
+
+/**
+ * The two figures that take a single model run apart instead of putting one trace per run
+ * on a shared chart: where the emitted carbon ends up, and what the radiative forcing is
+ * made of. Both come straight out of the model's state, which used to be discarded at the
+ * HTTP boundary (see IMPROVEMENTS.md 1.2).
+ *
+ * Half a dozen component curves per run would be unreadable overlaid, so unlike every
+ * other carousel figure these show one run at a time: the newest after a model run, and
+ * whichever row is clicked in the log afterwards. That also keeps them out of the run
+ * log's trace bookkeeping, which counts on one trace per run -- see isComponentFigure().
+ */
+
+/** One component curve. A dash marks the observed record apart from the model's own. */
+function componentTrace(name, x, y, color, dash) {
+    return {
+        x,
+        y,
+        name,
+        mode: "lines",
+        cliponaxis: false,
+        line: { color, width: dash ? 1.5 : 2, dash: dash || "solid" }
+    };
+}
+
+/** Shared layout for both component figures: a legend under the plot, and room for it. */
+function componentLayout(title, yaxis) {
+    return layoutFor(title, yaxis, {
+        showlegend: true,
+        legend: {
+            orientation: "h",
+            x: 0.5, xanchor: "center",
+            y: -0.15, yanchor: "top",
+            font: { size: 13 }
+        },
+        margin: { t: 50, r: 30, b: 100, l: 60, pad: 0 }
+    });
+}
+
+const carbonSinksLayout = () => componentLayout(
+    "Carbon sinks",
+    { title: "Gton CO<sub>2</sub>/year", rangemode: "tozero", hoverformat: ".1f" });
+
+const forcingLayout = () => componentLayout(
+    "Radiative forcing",
+    { title: "W/m<sup>2</sup>", rangemode: "tozero", hoverformat: ".2f" });
+
+// One colour per part of the carbon budget, shared by a modelled curve and its observed
+// counterpart. The three destinations add up to the total emissions.
+const SINK_COLORS = {
+    emissions: "#333",
+    atmosphere: "#d62728",
+    ocean: "#1f77b4",
+    land: "#2ca02c"
+};
+
+// Response key, legend label and colour of each forcing component, in legend order. The
+// keys are the ones radiativeforcingcomponents() in src/webserver.jl returns.
+const FORCING_COMPONENTS = [
+    ["Total", "Total", "#000"],
+    ["CO2", "CO<sub>2</sub>", "#d62728"],
+    ["CH4", "CH<sub>4</sub>", "#ff7f0e"],
+    ["N2O", "N<sub>2</sub>O", "#9467bd"],
+    ["H2O", "H<sub>2</sub>O (strat.)", "#17becf"],
+    ["O3", "O<sub>3</sub> (trop.)", "#8c564b"],
+    ["Aerosols", "Aerosols", "#1f77b4"],
+    ["Other", "Other", "#7f7f7f"]
+];
+
+/** The observed record of one component, stopping where the designed pathway takes over. */
+function observedComponent(name, series, color) {
+    const years = range(OBSERVED_HISTORY_START,
+        Math.min(OBSERVED_HISTORY_END, state.firstYear));
+    return componentTrace(name, years, OBSERVED_HISTORY[series].slice(0, years.length),
+        color, "dot");
+}
+
+function carbonSinkTraces(sinks) {
+    const modelled = (name, key) =>
+        componentTrace(name, state.years, sinks[key], SINK_COLORS[key]);
+    return [
+        modelled("Total emissions", "emissions"),
+        modelled("Atmosphere", "atmosphere"),
+        modelled("Ocean sink", "ocean"),
+        modelled("Land sink", "land"),
+        // The Global Carbon Budget's own sink estimates, so that the model's carbon cycle
+        // can be read against the record it is calibrated on. Drawn last, i.e. on top.
+        observedComponent("Ocean (obs.)", "OceanSink", SINK_COLORS.ocean),
+        observedComponent("Land (obs.)", "LandSink", SINK_COLORS.land)
+    ];
+}
+
+function forcingTraces(forcing) {
+    return FORCING_COMPONENTS.map(([key, label, color]) =>
+        componentTrace(label, state.years, forcing[key], color));
+}
+
+/**
+ * Draw both component figures for one set of model results. Called with nothing -- at
+ * start-up, after a change of year range, and whenever the active run in the log has no
+ * results of its own -- it leaves them empty, holding only their axes and title.
+ */
+export function plotRunComponents(results) {
+    const redraw = (name, traces, options) => {
+        // react() rather than purge-and-plot: the trace list changes wholesale on every
+        // run, and this keeps the figure's modebar and axes rather than rebuilding them.
+        Plotly.react(figureOf[name], traces, options, plotConfigOptions);
+        nudgeTitle(figureOf[name]);
+    };
+    redraw("carbonsinks", results ? carbonSinkTraces(results.carbonsinks) : [],
+        carbonSinksLayout());
+    redraw("radiativeforcing", results ? forcingTraces(results.forcing) : [],
+        forcingLayout());
 }
 
 // ---------------------------------------------------------------- scaling
