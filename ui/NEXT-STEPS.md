@@ -104,7 +104,11 @@ still the way off `Plotly.d3` — but it is no longer carrying a suspected bug f
 3. **Replace the d3 drag with Pointer Events**, still on Plotly 1.39.4. Isolating this from
    the version bump is the whole point: if the drag breaks, you know why.
 4. **Move to Plotly 3.x**, which is then just the `Plotly.plot` → `newPlot`/`addTraces`
-   change plus a look at the figures. Consider a partial bundle at the same time.
+   change plus a look at the figures. Consider a partial bundle at the same time, and check
+   whether `js/hoverZoom.js` is still needed: it patches 1.39's hover code, which cannot see
+   that the enlarged figures are CSS-scaled (`BUGS.md` #11). Upstream added support for
+   transformed graph divs after 1.39, so under 3.x the file has to go: a version that does
+   its own correction would have this one applied on top of it.
 5. **noUiSlider 15.** Left late deliberately: the API migration is small, but `styles.css`
    carries ~80 lines of custom `.noUi-*` styling, and v15 changed how handles are
    positioned internally. This is a visual-regression job, and the harness does not compare

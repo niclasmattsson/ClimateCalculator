@@ -1,14 +1,14 @@
 # Known bugs in the web interface
 
-Found while refactoring the UI in August 2026. All of these exist in the pre-refactor
-code as well — the refactor deliberately preserved them so that the change could be
-verified as behaviour-preserving. Numbers are referenced from `NOTE:` comments in the
-source.
+#1–#10 were found while refactoring the UI in August 2026; #11 was reported separately
+afterwards. All of these exist in the pre-refactor code as well — the refactor deliberately
+preserved them so that the change could be verified as behaviour-preserving. Numbers are
+referenced from `NOTE:` comments in the source.
 
 Severity: **A** = crashes or corrupts state, **B** = wrong numbers shown, **C** = cosmetic.
 
-**All ten are now addressed** (see the per-entry notes), one commit each, each verified with
-the harness in `test/`. One design question is deliberately left open under #9.
+**All eleven are now addressed** (see the per-entry notes), one commit each, each checked
+against the harness in `test/`. One design question is deliberately left open under #9.
 
 ---
 
@@ -213,3 +213,52 @@ The *Fix* button and the bug note in the interface were removed on the strength 
 the symptom ever comes back, the button was only `startDragBehavior()` and is trivial to
 restore — but the report should then be treated as a fresh investigation, because this
 explanation will have been ruled out.
+
+
+---
+
+## 11. (B) Hover labels are wrong on an enlarged figure — FIXED
+
+Clicking a figure enlarges it with a CSS transform (`transform: scale(1.9)` on
+`#figuregroup input[type=checkbox]:checked ~ figure`, styles.css). The transform is purely
+visual: the Plotly layout underneath still measures 571 x 430 px.
+
+**Reproduce:** click any figure that has traces on it to enlarge it, then run the mouse
+along the curve.
+
+**Result:** the live hover labels are far ahead of the mouse — at a quarter of the way in
+they read the value from just short of halfway — and past 1/1.9 of the plot width they stop
+appearing at all. At the normal figure size everything is fine.
+
+**Cause:** Plotly 1.39 locates the mouse with
+
+```
+xpx = event.clientX - dragElement.getBoundingClientRect().left
+```
+
+and then uses `xpx` as a layout pixel offset: it is compared against the axis length and
+converted to data by `xaxis.p2c()`. The bounding rect is in screen pixels, so on an
+enlarged figure every offset comes out a factor 1.9 too large, which is both the lag and
+the cut-off (an offset past the end of the axis makes Plotly unhover). Reading the CSS
+transform of the graph div is something Plotly only learned in v2.
+
+**Fixed** in js/hoverZoom.js, which wraps `Plotly.Fx.hover()` — the single entry point that
+all of Plotly's own mousemove handlers go through — and divides the offset from the drag
+element's top left corner by the figure's current CSS scale before Plotly sees the event.
+The scale is read from the computed transforms of the figure and its ancestors, so it costs
+nothing at the normal size (the event is then passed through untouched), needs no knowledge
+of the 1.9 in the stylesheet, and is correct mid-animation while the figure is still
+growing. Nothing else has to change: hover labels are drawn inside the figure's own SVG and
+the same CSS transform scales them up for free.
+
+Verified against the figures at both sizes and for all three transform origins (the
+`leftfigure` / `rightfigure` classes): the enlarged figure now reports exactly what the same
+relative position reports at the normal size, and the regression harness shows no other
+difference. The file has to be deleted rather than kept when the Plotly bundle is upgraded:
+a version that corrects for the transform itself would then be corrected twice.
+
+The same root cause is still visible in one place: dragging the y-axis of an *enlarged*
+figure moves it 1.9 times as far as the mouse does, because Plotly's drag code measures its
+deltas in screen pixels too. That path is buried in Plotly's `dragelement` module, which
+is not reachable from the `Plotly` object, so fixing it would mean patching the bundle
+itself. Left alone: dragging still works, it is only over-sensitive.

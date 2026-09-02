@@ -23,6 +23,7 @@ import {
 } from "./figures.js";
 import { logEmissions, addRowToLog, toggleLogRow, activateRow, resetLog } from "./runLog.js";
 import { submitEmissions } from "./api.js";
+import { fixHoverOnEnlargedFigures } from "./hoverZoom.js";
 
 const GASES = ["FossilCO2", "OtherCO2", "CH4", "N2O", "Population"];
 
@@ -464,6 +465,8 @@ function init() {
 
     changeScenario(dom.scenarioMenus[0]);
 }
+
+fixHoverOnEnlargedFigures();
 
 // Draw a dummy plot to initialize the Plotly object before anything else runs.
 Plotly.plot("editemissions", [dummyLine, historyTrace, dummyMarkers], { name: "" }, plotConfigOptions);
